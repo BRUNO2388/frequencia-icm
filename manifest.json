@@ -1,0 +1,17 @@
+{
+  "name": "Frequência ICM PINHOS",
+  "short_name": "ICM PINHOS",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d6a4f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23f2ece1'/><text x='50%' y='40%' font-family='serif' font-style='italic' font-weight='bold' font-size='22' fill='%23b81d24' text-anchor='middle'>ICM</text><text x='50%' y='70%' font-family='serif' font-style='italic' font-weight='bold' font-size='18' fill='%23b81d24' text-anchor='middle'>PINHOS</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
