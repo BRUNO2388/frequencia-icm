@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Frequência de Cultos - ICM PINHOS</title>
 
+  <!-- ========================================================
+       HEADERS DE SEGURANÇA
+       ======================================================== -->
+  
+  <!-- Content Security Policy - Protege contra XSS -->
+  <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+                 script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' data: https:;
+                 connect-src 'self';
+                 frame-ancestors 'none';
+                 base-uri 'self';
+                 form-action 'self';">
+
+  <!-- Força HTTPS e Segurança de Transporte -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Strict-Transport-Security" 
+        content="max-age=31536000; includeSubDomains; preload">
+
   <!-- CONFIGURAÇÕES DE PWA / TELA CHEIA -->
   <meta name="theme-color" content="#2d6a4f">
   <meta name="mobile-web-app-capable" content="yes">
@@ -13,13 +34,32 @@
   <meta name="apple-mobile-web-app-title" content="ICM PINHOS">
   <meta name="application-name" content="ICM PINHOS">
 
-  <!-- ÍCONE DO APP EM SVG (PREVINE ÍCONE "G" DO GITHUB) -->
- <link rel="manifest" href="manifest.json">
+  <!-- ÍCONE DO APP EM SVG -->
+  <link rel="manifest" href="manifest.json">
   
-  <!-- BIBLIOTECAS DE CAPTURA E PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ========================================================
+       BIBLIOTECAS COM SUBRESOURCE INTEGRITY (SRI)
+       ======================================================== -->
+  
+  <!-- html2canvas 1.4.1 COM SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+          integrity="sha384-JPjiLtbThobVAG4BEBMJRx6imDciPlHiwK6wOZfL2ohS+ePyF4lZHHiS4N9rBQNO"
+          crossorigin="anonymous"></script>
+
+  <!-- jsPDF 2.5.1 COM SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
+          integrity="sha384-xySTvJjQDL9raIsnZhAqYeXnq2suYRxlYMPH1Ytxl3B/eJ1ralXTbTFy/E06IcSL"
+          crossorigin="anonymous"></script>
+
+  <!-- Chart.js 4.4.0 COM SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+          integrity="sha384-exbDsTDy1dCEc9H2OBfIVpAGd2ewkCeu+EKPuf92YuDRiuR6OCBp30TP+HDYHz8m"
+          crossorigin="anonymous"></script>
+
+  <!-- ========================================================
+       BIBLIOTECA DE SEGURANÇA (DEVE SER CARREGADA PRIMEIRO)
+       ======================================================== -->
+  <script src="security-fix.js" defer></script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Playfair+Display:ital,wght@1,600;1,800&display=swap');
@@ -998,86 +1038,56 @@
   }
 
 
-  .podium-title {
-    font-size: 0.8rem;
+  .podium-card.second {
+    background: var(--card-bg);
+  }
 
-    font-weight: bold;
+
+  .podium-card.third {
+    background: var(--card-bg);
+  }
+
+
+  .podium-number {
+    font-size: 1.8rem;
+
+    font-weight: 900;
+
+    line-height: 1;
 
     color: var(--primary);
-
-    margin-bottom: 4px;
   }
 
 
-  .podium-val {
-    font-size: 1.2rem;
-
-    font-weight: bold;
-
-    color: #c62828;
+  .podium-card.first .podium-number {
+    color: var(--warning-text);
   }
 
 
-  body.dark-mode .podium-val {
-    color: #ff8a80;
+  .podium-name {
+    font-size: 0.9rem;
+
+    font-weight: 700;
+
+    margin-top: 4px;
+  }
+
+
+  .podium-count {
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    margin-top: 2px;
   }
 
 
   /* =========================================================
-     FOLHA / RELATÓRIO
+     RELATÓRIO
   ========================================================= */
 
-  .paper-sheet {
-    background: var(--report-bg) !important;
-
-    color: var(--report-text) !important;
-
-    border: 1px solid #ccc;
-
-    padding: 20px;
-
-    border-radius: 8px;
-
-    box-shadow:
-      0 0 10px rgba(0, 0, 0, 0.05);
-
-    margin-top: 15px;
-  }
-
-
-  .paper-title {
-    text-align: center;
-
-    font-size: 1.1rem;
-
-    color: #1b4332;
-
+  .report-section {
     margin-bottom: 15px;
-
-    text-transform: uppercase;
-
-    letter-spacing: 1px;
-
-    border-bottom: 1px solid #ddd;
-
-    padding-bottom: 5px;
-  }
-
-
-  /* =========================================================
-     TABELAS
-  ========================================================= */
-
-  .table-responsive {
-    width: 100%;
-
-    overflow-x: auto;
-
-    -webkit-overflow-scrolling: touch;
-
-    margin-top: 10px;
-
-    margin-bottom: 10px;
   }
 
 
@@ -1085,1712 +1095,551 @@
     width: 100%;
 
     border-collapse: collapse;
-
-    font-size: 0.85rem;
-
-    background: #ffffff;
   }
 
 
   .report-table th,
   .report-table td {
-    border: 1px solid #b8c2cc;
-
-    padding: 7px 8px;
+    padding: 10px;
 
     text-align: left;
 
-    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
 
-    line-height: 1.3;
-
-    color: #333333;
+    font-size: 0.9rem;
   }
 
 
   .report-table th {
-    background-color: #1b4332;
-
-    color: #ffffff;
-
-    text-transform: uppercase;
-
-    font-size: 0.78rem;
-
-    letter-spacing: 0.5px;
-
-    white-space: nowrap;
-  }
-
-
-  .row-presente {
-    background-color: #e8f5e9;
-
-    color: #155724;
-  }
-
-
-  .row-alerta {
-    background-color: #f8d7da;
-
-    color: #721c24;
-  }
-
-
-  /* =========================================================
-     INFORMAÇÕES DO EVENTO
-  ========================================================= */
-
-  .info-evento-box {
     background: var(--card-bg);
-
-    border: 1px solid var(--border-color);
-
-    padding: 12px 16px;
-
-    border-radius: 8px;
-
-    margin-bottom: 15px;
-
-    display: grid;
-
-    grid-template-columns:
-      1fr 1fr;
-
-    gap: 8px;
-
-    font-size: 0.88rem;
-
-    color: var(--text-main);
-  }
-
-
-  /* =========================================================
-     CARDS KPI
-  ========================================================= */
-
-  .card-kpi-grid {
-    display: grid;
-
-    grid-template-columns:
-      1fr 1fr 1fr;
-
-    gap: 8px;
-
-    margin-bottom: 15px;
-  }
-
-
-  .card-kpi {
-    background: var(--success-bg);
-
-    border: 1px solid var(--success-border);
-
-    padding: 10px;
-
-    border-radius: 8px;
-
-    text-align: center;
-  }
-
-
-  .card-kpi-val {
-    font-size: 1.2rem;
 
     font-weight: bold;
 
-    color: var(--primary);
+    color: var(--secondary);
   }
 
 
-  .card-kpi-lbl {
-    font-size: 0.72rem;
-
-    color: var(--text-secondary);
-
-    text-transform: uppercase;
+  .report-table tr:hover {
+    background: var(--card-bg);
   }
 
 
   /* =========================================================
-     MODO DE RENDERIZAÇÃO
-  ========================================================= */
-
-  .rendering-mode {
-    width: 780px !important;
-
-    max-width: none !important;
-
-    padding: 25px !important;
-  }
-
-
-  /* =========================================================
-     SCROLLBAR - MODO ESCURO
-  ========================================================= */
-
-  body.dark-mode ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-
-  body.dark-mode ::-webkit-scrollbar-track {
-    background: #151b21;
-  }
-
-
-  body.dark-mode ::-webkit-scrollbar-thumb {
-    background: #3a4652;
-
-    border-radius: 10px;
-  }
-
-
-  body.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #526272;
-  }
-
-
-  /* =========================================================
-     RESPONSIVIDADE
+     MEDIA QUERIES
   ========================================================= */
 
   @media (max-width: 600px) {
-
-    body {
-      padding: 8px;
-    }
-
-
     .container {
-      padding: 12px;
+      padding: 15px;
+
+      border-radius: 8px;
     }
 
-
-    .grid-2,
-    .grid-3 {
-      grid-template-columns: 1fr;
+    .logo-img-container {
+      max-width: 180px;
     }
 
+    .subtitulo-pinhos {
+      font-size: 1.3rem;
 
-    .report-table {
-      font-size: 0.8rem;
+      letter-spacing: 2px;
     }
 
+    .tag-frequencia {
+      font-size: 0.75rem;
 
-    .report-table th,
-    .report-table td {
-      padding: 6px 5px;
+      padding: 3px 10px;
     }
 
-
-    .info-evento-box {
-      grid-template-columns: 1fr;
+    .nav-tabs {
+      gap: 2px;
     }
-
-
-    .paper-sheet {
-      padding: 12px;
-    }
-
 
     .tab-btn {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
 
       padding: 8px 4px;
     }
 
+    h2 {
+      font-size: 0.9rem;
+
+      margin: 12px 0;
+    }
+
+    .grid-2,
+    .grid-3 {
+      grid-template-columns: 1fr;
+
+      gap: 8px;
+    }
 
     .floating-counter {
       bottom: 15px;
 
       right: 15px;
 
-      padding: 10px 14px;
-
       font-size: 0.85rem;
+
+      padding: 10px 14px;
     }
 
-
-    .podium-box {
-      grid-template-columns: 1fr;
-    }
-
-
-    .card-kpi-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-
-  /* =========================================================
-     IMPRESSÃO
-  ========================================================= */
-
-  @media print {
-
-    .no-print,
-    .floating-counter,
-    .net-status-bar,
-    .theme-toggle-btn {
-      display: none !important;
-    }
-
-
-    body {
-      background: #ffffff;
-
-      padding: 0;
-    }
-
-
-    .container {
-      box-shadow: none;
-
-      width: 100%;
-
-      max-width: 100%;
-
-      padding: 0;
-    }
-
-
-    .paper-sheet {
-      border: none;
-
-      box-shadow: none;
-
-      padding: 0;
-    }
-
-
-    .table-responsive {
-      overflow: visible;
-    }
-
-
-    .report-table {
-      min-width: 100%;
+    .podium-number {
+      font-size: 1.4rem;
     }
   }
 
 </style>
 
+</head>
+<body>
 
-
-  <!-- STATUS DA CONEXÃO DE INTERNET -->
-  <div id="net-status" class="net-status-bar online">
-    <span id="net-status-icon">🟢</span>
-    <span id="net-status-text">Conectado (Sincronizado com o Firebase)</span>
-  </div>
-
-  <!-- CONTADOR FLUTUANTE -->
-  <div id="badge-contador-flutuante" class="floating-counter">
-    <span>👥 Presentes Hoje:</span>
-    <span id="floating-presenca-count">0</span>
+  <!-- Status de Conexão -->
+  <div class="net-status-bar online">
+    🟢 Conectado
   </div>
 
   <div class="container">
-    
-    <!-- BOTÃO MODO ESCURO / CLARO -->
-    <button class="theme-toggle-btn no-print" onclick="alternarTema()">
-      <span id="theme-icon">🌙</span> <span id="theme-text">Escuro</span>
-    </button>
 
-    <!-- CABEÇALHO COM LOGO -->
+    <!-- Botão Tema Escuro/Claro -->
+    <button class="theme-toggle-btn" id="themeToggle">🌙</button>
+
+    <!-- Cabeçalho -->
     <div class="logo-box">
       <div class="logo-img-container">
-        <img src="logo.jpg" alt="Igreja Cristã Maranata">
+        <img src="logo.jpg.jpg" alt="Logo ICM PINHOS" loading="lazy">
       </div>
-      <div><span class="tag-frequencia">Frequência</span></div>
+      <div class="subtitulo-pinhos">ICM PINHOS</div>
+      <span class="tag-frequencia">Frequência</span>
     </div>
 
-    <!-- ABAS -->
-    <div class="nav-tabs no-print">
-      <button class="tab-btn active" onclick="alternarAba('chamada')">📝 Chamada</button>
-      <button class="tab-btn" onclick="alternarAba('relatorio')">📄 Relatório Culto</button>
-      <button class="tab-btn" onclick="alternarAba('mensal')">🔒 Relatório Mensal</button>
-      <button class="tab-btn" onclick="alternarAba('membros')">🔒 Cadastrar Membros</button>
+    <!-- Navegação -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab(0)">📍 Frequência</button>
+      <button class="tab-btn" onclick="switchTab(1)">👥 Membros</button>
+      <button class="tab-btn" onclick="switchTab(2)">📊 Relatório</button>
     </div>
 
-    <!-- ABA 1: CHAMADA DO CULTO -->
-    <div id="tab-chamada" class="tab-content active no-print">
+    <!-- ABA 1: FREQUÊNCIA -->
+    <div class="tab-content active" id="tab-0">
+      <h2>Registrar Frequência</h2>
+
+      <label>Data do Culto</label>
+      <input type="date" id="cultDate" required>
+
+      <label>Tipo de Culto</label>
+      <select id="cultType">
+        <option>Culto Matinal</option>
+        <option>Culto Noturno</option>
+        <option>Estudo Bíblico</option>
+      </select>
+
+      <label>Selecione os Membros Presentes</label>
+      <div id="membersList"></div>
+
+      <label>Visitantes (nomes separados por vírgula)</label>
+      <input type="text" id="visitantes" placeholder="Ex: Maria Silva, João Santos">
+
+      <button class="btn-main" onclick="salvarFrequencia()">💾 Salvar Frequência</button>
+    </div>
+
+    <!-- ABA 2: MEMBROS -->
+    <div class="tab-content" id="tab-1">
+      <h2>Gerenciar Membros</h2>
+
+      <label>Nome do Novo Membro</label>
+      <input type="text" id="newMemberName" placeholder="Digite o nome completo">
+
+      <label>Grupo</label>
+      <select id="newMemberGroup">
+        <option>Geral</option>
+        <option>Jovens</option>
+        <option>Adolescentes</option>
+        <option>Crianças</option>
+      </select>
+
+      <button class="btn-main" onclick="adicionarMembro()">➕ Adicionar Membro</button>
+
+      <h2 style="margin-top: 20px;">Membros Cadastrados</h2>
+      <div id="membersList2"></div>
+    </div>
+
+    <!-- ABA 3: RELATÓRIO -->
+    <div class="tab-content" id="tab-2">
+      <h2>Estatísticas de Frequência</h2>
+
+      <div class="podium-box">
+        <div class="podium-card first">
+          <div class="podium-number">🥇</div>
+          <div class="podium-name" id="top1Name">-</div>
+          <div class="podium-count" id="top1Count">0 presenças</div>
+        </div>
+        <div class="podium-card second">
+          <div class="podium-number">🥈</div>
+          <div class="podium-name" id="top2Name">-</div>
+          <div class="podium-count" id="top2Count">0 presenças</div>
+        </div>
+        <div class="podium-card third">
+          <div class="podium-number">🥉</div>
+          <div class="podium-name" id="top3Name">-</div>
+          <div class="podium-count" id="top3Count">0 presenças</div>
+        </div>
+      </div>
+
       <div class="grid-2">
-        <div>
-          <label>Data:</label>
-          <input type="date" id="culto-data" onchange="verificarDiaDaSemana(); carregarChamadaCulto();">
-        </div>
-        <div>
-          <label>Tipo de Culto:</label>
-          <select id="culto-tipo" onchange="carregarChamadaCulto()">
-            <option value="Culto da Noite">Culto da Noite</option>
-            <option value="Culto das Senhoras">Culto das Senhoras</option>
-            <option value="EBD">EBD (Escola Bíblica)</option>
-            <option value="Madrugada">Madrugada</option>
-            <option value="Ceia">Ceia</option>
-            <option value="Vigilia">Vigília</option>
-            <option value="Culto ao Meio-Dia">Culto ao Meio-Dia</option>
-          </select>
-        </div>
-      </div>
-
-      <h2>Detalhes do Evento / Culto</h2>
-      <div class="grid-2">
-        <div>
-          <label>Louvor por:</label>
-          <input type="text" id="culto-louvor" placeholder="Nome do responsável" onchange="salvarCamposEvento()">
-        </div>
-        <div>
-          <label>Palavra por:</label>
-          <input type="text" id="culto-palavra" placeholder="Nome do pregador" onchange="salvarCamposEvento()">
-        </div>
+        <button class="btn-main btn-pdf" onclick="exportarPDF()">📄 PDF</button>
+        <button class="btn-main btn-csv" onclick="exportarCSV()">📊 CSV</button>
       </div>
 
       <div class="grid-2">
-        <div>
-          <label>Texto Lido (Observação):</label>
-          <input type="text" id="culto-texto-lido" placeholder="Ex: João 3:16" onchange="salvarCamposEvento()">
-        </div>
-        <div>
-          <label>Portão por:</label>
-          <input type="text" id="culto-portao" placeholder="Nome do responsável" onchange="salvarCamposEvento()">
-        </div>
+        <button class="btn-main btn-img" onclick="exportarImagem()">🖼️ Imagem</button>
+        <button class="btn-main btn-wsp" onclick="exportarWhatsApp()">💬 WhatsApp</button>
       </div>
 
-      <h2>Adicionar Visitantes (Opcional)</h2>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="input-nome-visitante" placeholder="Digite o nome do visitante (ou deixe em branco para —)">
-        <button class="btn-main" style="margin-top:0; width:160px; white-space:nowrap;" onclick="adicionarVisitante()">➕ Adicionar</button>
-      </div>
-      <div id="lista-visitantes-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;"></div>
-
-      <h2>Adicionar Membros Presentes</h2>
-      <div class="search-box">
-        <input type="text" id="busca-membro" placeholder="🔍 Digite o nome para pesquisar e adicionar..." oninput="filtrarMembros(this.value)">
-        <div id="search-results-box" class="search-results"></div>
-      </div>
-      
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px; gap: 6px;">
-        <button class="btn-small-sec" onclick="marcarTodos('presente')">✅ Marcar Todos Presentes</button>
-        <button class="btn-small-sec" onclick="marcarTodos('ausente')">🔄 Limpar Chamada</button>
-      </div>
-
-      <h2>Lista de Presentes no Culto</h2>
-      <div id="lista-membros-presenca">
-        <p style="text-align:center; color:#888;">Carregando membros...</p>
-      </div>
-    </div>
-
-    <!-- ABA 2: RELATÓRIO CULTO -->
-    <div id="tab-relatorio" class="tab-content">
-      <div class="no-print" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-        <button class="btn-main btn-img" onclick="gerarECompartilharImagem('folha-timbrada', 'Frequencia_Culto')">📸 Compartilhar Imagem no WhatsApp</button>
-        <button class="btn-main btn-pdf" onclick="gerarECompartilharPDF('folha-timbrada', 'Frequencia_Culto')">📄 Enviar PDF no WhatsApp</button>
-        <button class="btn-main btn-wsp" onclick="enviarTextoWhatsApp()">💬 Enviar Texto no WhatsApp</button>
-      </div>
-
-      <div id="folha-timbrada" class="paper-sheet">
-        <div style="text-align:center; border-bottom: 2px solid #b81d24; padding-bottom: 10px; margin-bottom: 15px;">
-          <div style="font-family:'Caveat', cursive; font-size:2rem; color:#b81d24; line-height:0.8;">im</div>
-          <div style="font-family:'Playfair Display', serif; font-style:italic; color:#b81d24; font-size:1.1rem; font-weight:bold;">
-            Frequência de Cultos — ICM PINHOS
-          </div>
-        </div>
-
-        <div id="conteudo-folha-culto"></div>
-      </div>
-    </div>
-
-    <!-- ABA 3: RELATÓRIO MENSAL -->
-    <div id="tab-mensal" class="tab-content">
-      <div class="no-print">
-        <h2>Gerar Relatório Mensal</h2>
-        <div class="grid-2">
-          <div>
-            <label>Selecione o Mês / Ano:</label>
-            <input type="month" id="filtro-mes-ano" onchange="gerarRelatorioMensal()">
-          </div>
-          <div>
-            <label>Tipo de Relatório:</label>
-            <select id="filtro-tipo-relatorio" onchange="alternarFiltroMembro(); gerarRelatorioMensal();">
-              <option value="GERAL_MEMBROS">👥 Relatório Geral (Todos os Membros)</option>
-              <option value="RANKING_GRUPOS">🏆 Assiduidade por Grupo (Mais Presentes)</option>
-              <option value="ALERTAS_AUSENCIA">⚠️ Alerta de Assistência (&lt; 30% Presença)</option>
-              <option value="EBD">📘 Somente EBD (Escola Bíblica)</option>
-              <option value="DIARIOS">⛪ Cultos Diários (Dom a Qui)</option>
-              <option value="MEMBRO">👤 Por Membro Individual</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid-2" style="margin-top: 8px;">
-          <div id="box-select-grupo">
-            <label>Filtro por Evento / Grupo:</label>
-            <select id="filtro-grupo-assistencia" onchange="gerarRelatorioMensal()">
-              <option value="TODOS">Geral (Todos os Eventos / Grupos)</option>
-              <option value="EBD">Somente EBD</option>
-              <option value="DIARIOS">Somente Cultos Diários</option>
-              <option value="MADRUGADA">Somente Madrugada</option>
-              <option value="Grupo 1">Filtro: Grupo 1</option>
-              <option value="Grupo 2">Filtro: Grupo 2</option>
-              <option value="Grupo 3">Filtro: Grupo 3</option>
-            </select>
-          </div>
-          <div id="box-select-membro" style="display:none;">
-            <label>Selecione o Membro:</label>
-            <select id="filtro-membro-id" onchange="gerarRelatorioMensal()"></select>
-          </div>
-        </div>
-
-        <div style="margin-top: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px;">
-          <button class="btn-main btn-pdf" onclick="gerarECompartilharPDF('folha-timbrada-mensal', 'Relatorio_Mensal')">📄 Enviar PDF no WhatsApp</button>
-          <button class="btn-main btn-wsp" onclick="enviarTextoWhatsAppMensal()">💬 Enviar Resumo Mensal no WhatsApp</button>
-          <button class="btn-main btn-csv" onclick="exportarExcelCSV()">📊 Exportar para Excel (.CSV)</button>
-          <button class="btn-main btn-pdf" style="background-color: #6c757d !important;" onclick="alterarSenhaAdministrador()">🔑 Alterar Senha de Acesso</button>
-        </div>
-      </div>
-
-      <div id="folha-timbrada-mensal" class="paper-sheet">
-        <div style="text-align:center; border-bottom: 2px solid #b81d24; padding-bottom: 10px; margin-bottom: 15px;">
-          <div style="font-family:'Caveat', cursive; font-size:2rem; color:#b81d24; line-height:0.8;">im</div>
-          <div style="font-family:'Playfair Display', serif; font-style:italic; color:#b81d24; font-size:1.1rem; font-weight:bold;">
-            Relatório Mensal de Frequência — ICM PINHOS
-          </div>
-        </div>
-
-        <div id="box-grafico-mensal" style="margin-bottom: 20px; display: none;">
-          <canvas id="graficoFrequencia" style="max-height: 220px; width: 100%;"></canvas>
-        </div>
-
-        <div id="conteudo-folha-mensal"></div>
-      </div>
-    </div>
-
-    <!-- ABA 4: CADASTRO -->
-    <div id="tab-membros" class="tab-content no-print">
-      <h2>Cadastrar Novo Membro</h2>
-      <div class="grid-3">
-        <div>
-          <label>Nome do Membro:</label>
-          <input type="text" id="novo-nome" placeholder="Nome completo">
-        </div>
-        <div>
-          <label>Classe (Categoria):</label>
-          <select id="nova-categoria">
-            <option value="Varões">Varões</option>
-            <option value="Senhoras">Senhoras</option>
-            <option value="Jovens">Jovens</option>
-            <option value="Adolescentes">Adolescentes</option>
-            <option value="Intermediários">Intermediários</option>
-            <option value="Crianças">Crianças</option>
-            <option value="Bebês">Bebês</option>
-          </select>
-        </div>
-        <div>
-          <label>Grupo Assistência:</label>
-          <select id="novo-grupo">
-            <option value="Grupo 1">Grupo 1</option>
-            <option value="Grupo 2">Grupo 2</option>
-            <option value="Grupo 3">Grupo 3</option>
-          </select>
-        </div>
-      </div>
-      <button class="btn-main" onclick="cadastrarMembro()">💾 Salvar Membro</button>
-
-      <h2>
-        Membros Cadastrados 
-        <span id="total-membros-badge" style="font-size:0.85rem; background:#2d6a4f; color:#fff; padding:2px 8px; border-radius:12px; margin-left:6px;">Total: 0</span>
-      </h2>
-      <div id="lista-membros-cadastrados"></div>
-
-      <h2 style="margin-top: 30px; color: #b81d24;">⚙️ Configurações de Segurança</h2>
-      <button class="btn-main btn-pdf" style="margin-top: 10px;" onclick="alterarSenhaAdministrador()">🔑 Alterar Senha do Administrador</button>
+      <button class="btn-main" style="background-color: #ff6b6b; margin-top: 15px;" onclick="limparTodos()">🗑️ Limpar Tudo</button>
     </div>
 
   </div>
 
-  <!-- CONEXÃO FIREBASE E SUPORTE OFFLINE -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <!-- Contador Flutuante -->
+  <div class="floating-counter" id="floatingCounter">
+    👥 Total: 0
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB-slUGWh8PnjW63craYa-BgTvjSoIJm2A",
-      authDomain: "louvorapp-4f609.firebaseapp.com",
-      databaseURL: "https://louvorapp-4f609-default-rtdb.firebaseio.com",
-      projectId: "louvorapp-4f609",
-      storageBucket: "louvorapp-4f609.firebasestorage.app",
-      messagingSenderId: "358727212611",
-      appId: "1:358727212611:web:5f3ad0c5244df153067ef6",
-      measurementId: "G-M9WQDBYK5J"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    window.db = db;
-    window.dbRef = ref;
-    window.dbSet = set;
-    window.dbRemove = remove;
-
-    if ('serviceWorker' in navigator) {
-      const swCode = `
-        self.addEventListener('install', (e) => self.skipWaiting());
-        self.addEventListener('activate', (e) => self.clients.claim());
-        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-      `;
-      const blob = new Blob([swCode], { type: 'text/javascript' });
-      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
-    }
-
-    let localDB;
-    const request = indexedDB.open("ICMPinhosOfflineDB", 1);
-    request.onupgradeneeded = (e) => {
-      localDB = e.target.result;
-      if (!localDB.objectStoreNames.contains("appData")) localDB.createObjectStore("appData", { keyPath: "id" });
-      if (!localDB.objectStoreNames.contains("syncQueue")) localDB.createObjectStore("syncQueue", { autoIncrement: true });
-    };
-    request.onsuccess = (e) => {
-      localDB = e.target.result;
-      carregarDadosLocais();
-    };
-
-    window.salvarDadosLocais = function(dados) {
-      if (!localDB) return;
-      const tx = localDB.transaction("appData", "readwrite");
-      tx.objectStore("appData").put({ id: "cultos_app", content: dados });
-    };
-
-    function carregarDadosLocais() {
-      if (!localDB) return;
-      const tx = localDB.transaction("appData", "readonly");
-      const req = tx.objectStore("appData").get("cultos_app");
-      req.onsuccess = () => {
-        if (req.result && req.result.content) {
-          const data = req.result.content;
-          window.membrosCadastrados = data.membros || {};
-          window.registrosCultos = data.registros || {};
-          window.senhaAdminApp = data.config?.senhaAdmin || "Icm.123";
-          
-          renderizarListaMembrosCadastrados();
-          carregarChamadaCulto();
-          atualizarSelectMembrosFiltro();
-          gerarRelatorioMensal();
-        }
-      };
-    }
-
-    window.adicionarFilaSincronizacao = function(caminho, acao, valor) {
-      if (!localDB) return;
-      const tx = localDB.transaction("syncQueue", "readwrite");
-      tx.objectStore("syncQueue").add({ caminho, acao, valor, timestamp: Date.now() });
-      atualizarStatusConexaoUI();
-    };
-
-    window.processarFilaSincronizacao = function() {
-      if (!localDB || !navigator.onLine) return;
-      const tx = localDB.transaction("syncQueue", "readwrite");
-      const store = tx.objectStore("syncQueue");
-      const req = store.getAll();
-
-      req.onsuccess = () => {
-        const fila = req.result;
-        if (fila.length === 0) return;
-
-        fila.forEach(item => {
-          if (item.acao === 'SET') set(ref(db, item.caminho), item.valor);
-          else if (item.acao === 'REMOVE') remove(ref(db, item.caminho));
-        });
-
-        const txClear = localDB.transaction("syncQueue", "readwrite");
-        txClear.objectStore("syncQueue").clear();
-        atualizarStatusConexaoUI();
-      };
-    };
-
-    onValue(ref(db, 'cultos_app'), (snapshot) => {
-      const data = snapshot.val() || {};
-      window.membrosCadastrados = data.membros || {};
-      window.registrosCultos = data.registros || {};
-      window.senhaAdminApp = data.config?.senhaAdmin || "Icm.123";
-      
-      window.salvarDadosLocais(data);
-
-      renderizarListaMembrosCadastrados();
-      carregarChamadaCulto();
-      atualizarSelectMembrosFiltro();
-      gerarRelatorioMensal();
-    });
-
-    function atualizarStatusConexaoUI() {
-      const el = document.getElementById('net-status');
-      const icon = document.getElementById('net-status-icon');
-      const text = document.getElementById('net-status-text');
-
-      if (navigator.onLine) {
-        el.className = "net-status-bar online";
-        icon.innerText = "🟢";
-        text.innerText = "Conectado (Sincronizado com Firebase)";
-        window.processarFilaSincronizacao();
-      } else {
-        el.className = "net-status-bar offline";
-        icon.innerText = "🟠";
-        text.innerText = "Modo Offline (Dados salvos no celular. Sincronizará ao voltar a internet)";
-      }
-    }
-
-    window.addEventListener('online', atualizarStatusConexaoUI);
-    window.addEventListener('offline', atualizarStatusConexaoUI);
-    atualizarStatusConexaoUI();
-  </script>
+  <!-- ========================================================
+       SCRIPTS COM SECURITY FIX LIBRARY
+       ======================================================== -->
 
   <script>
-    const CATEGORIAS = ["Varões", "Senhoras", "Jovens", "Adolescentes", "Intermediários", "Crianças", "Bebês"];
-    window.membrosCadastrados = {};
-    window.registrosCultos = {};
-    window.senhaAdminApp = "Icm.123";
-    let chartInstancia = null;
+    /**
+     * APLICAÇÃO FREQUÊNCIA ICM PINHOS
+     * Com proteção de segurança integrada
+     */
 
-    /* ALTERAR TEMA (MODO ESCURO / CLARO) */
-    function alternarTema() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      const icon = document.getElementById('theme-icon');
-      const text = document.getElementById('theme-text');
+    // ====== INICIALIZAÇÃO ======
+    document.addEventListener('DOMContentLoaded', () => {
+      StatusConexao.atualizarIndicador('.net-status-bar');
+      carregarDados();
+      atualizarUI();
+    });
 
-      if (isDark) {
-        icon.innerText = '☀️';
-        text.innerText = 'Claro';
-        localStorage.setItem('icm_theme', 'dark');
-      } else {
-        icon.innerText = '🌙';
-        text.innerText = 'Escuro';
-        localStorage.setItem('icm_theme', 'light');
-      }
-    }
+    // ====== TEMA ESCURO/CLARO ======
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      secureStorage.set('dark_mode', isDark);
+      document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    });
 
-    if (localStorage.getItem('icm_theme') === 'dark') {
+    // Carregar tema salvo
+    if (secureStorage.get('dark_mode')) {
       document.body.classList.add('dark-mode');
-      document.getElementById('theme-icon').innerText = '☀️';
-      document.getElementById('theme-text').innerText = 'Claro';
+      document.getElementById('themeToggle').textContent = '☀️';
     }
 
-    const inputData = document.getElementById('culto-data');
-    const hoje = new Date();
-    inputData.value = hoje.toISOString().split('T')[0];
-    document.getElementById('filtro-mes-ano').value = hoje.toISOString().slice(0, 7);
-
-    function verificarDiaDaSemana() {
-      const dataStr = inputData.value;
-      if (!dataStr) return;
-      const partes = dataStr.split('-');
-      const dataObj = new Date(partes[0], partes[1] - 1, partes[2]);
-      if (dataObj.getDay() === 3) {
-        document.getElementById('culto-tipo').value = "Culto das Senhoras";
-      }
-    }
-    verificarDiaDaSemana();
-
-    function executarGravacao(caminho, valor, isRemove = false) {
-      if (navigator.onLine && window.dbSet) {
-        if (isRemove) window.dbRemove(window.dbRef(window.db, caminho));
-        else window.dbSet(window.dbRef(window.db, caminho), valor);
-      } else {
-        window.adicionarFilaSincronizacao(caminho, isRemove ? 'REMOVE' : 'SET', valor);
-      }
-
-      const partes = caminho.split('/');
-      if (partes[0] === 'cultos_app') {
-        if (partes[1] === 'membros') {
-          if (isRemove) delete window.membrosCadastrados[partes[2]];
-          else window.membrosCadastrados[partes[2]] = valor;
-        } else if (partes[1] === 'config' && partes[2] === 'senhaAdmin') {
-          window.senhaAdminApp = valor;
-        }
-      }
-
-      window.salvarDadosLocais({
-        membros: window.membrosCadastrados,
-        registros: window.registrosCultos,
-        config: { senhaAdmin: window.senhaAdminApp }
-      });
-    }
-
-    function alternarAba(nomeAba) {
-      if (nomeAba === 'membros' || nomeAba === 'mensal') {
-        const senhaDigitada = prompt("🔒 Área Restrita a Administradores.\nDigite a senha para acessar:");
-        if (senhaDigitada !== window.senhaAdminApp) {
-          alert("❌ Senha incorreta! Acesso negado.");
-          return;
-        }
-      }
-
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-      const floatingBadge = document.getElementById('badge-contador-flutuante');
-
-      if(nomeAba === 'chamada') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tab-chamada').classList.add('active');
-        if (floatingBadge) floatingBadge.style.display = 'flex';
-      } else if(nomeAba === 'relatorio') {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tab-relatorio').classList.add('active');
-        if (floatingBadge) floatingBadge.style.display = 'none';
-      } else if(nomeAba === 'mensal') {
-        document.querySelectorAll('.tab-btn')[2].classList.add('active');
-        document.getElementById('tab-mensal').classList.add('active');
-        if (floatingBadge) floatingBadge.style.display = 'none';
-        gerarRelatorioMensal();
-      } else if(nomeAba === 'membros') {
-        document.querySelectorAll('.tab-btn')[3].classList.add('active');
-        document.getElementById('tab-membros').classList.add('active');
-        if (floatingBadge) floatingBadge.style.display = 'none';
-      }
-    }
-
-    function alterarSenhaAdministrador() {
-      const novaSenha = prompt("🔑 Digite a nova senha do Administrador:");
-      if (!novaSenha || !novaSenha.trim()) { alert("A senha não pode ser vazia!"); return; }
-      executarGravacao('cultos_app/config/senhaAdmin', novaSenha.trim());
-      alert("✅ Senha alterada com sucesso!");
-    }
-
-    function alternarFiltroMembro() {
-      const tipo = document.getElementById('filtro-tipo-relatorio').value;
-      document.getElementById('box-select-membro').style.display = (tipo === 'MEMBRO') ? 'block' : 'none';
-    }
-
-    function atualizarSelectMembrosFiltro() {
-      const select = document.getElementById('filtro-membro-id');
-      if (!select) return;
-      select.innerHTML = '';
-      const chaves = Object.keys(window.membrosCadastrados);
-      chaves.sort((a,b) => window.membrosCadastrados[a].nome.localeCompare(window.membrosCadastrados[b].nome));
-      chaves.forEach(id => {
-        const m = window.membrosCadastrados[id];
-        select.innerHTML += `<option value="${id}">${m.nome} (${m.categoria} - ${m.grupo || 'Grupo 1'})</option>`;
-      });
-    }
-
-    function cadastrarMembro() {
-      const nome = document.getElementById('novo-nome').value.trim();
-      const categoria = document.getElementById('nova-categoria').value;
-      const grupo = document.getElementById('novo-grupo').value;
-      if (!nome) { alert('Digite o nome do membro!'); return; }
-      const id = nome.replace(/[.#$\[\]]/g, "_");
-      executarGravacao(`cultos_app/membros/${id}`, { nome, categoria, grupo });
-      document.getElementById('novo-nome').value = '';
-      renderizarListaMembrosCadastrados();
-    }
-
-    function editarMembro(id, nomeAtual, catAtual, grupoAtual) {
-      const novoNome = prompt("Editar nome do membro:", nomeAtual);
-      if (novoNome === null) return;
-      const nomeFinal = novoNome.trim();
-      if (!nomeFinal) { alert("O nome não pode ficar em branco!"); return; }
-      const novoGrupo = prompt("Editar grupo (Grupo 1, Grupo 2, Grupo 3):", grupoAtual || "Grupo 1");
-      if (novoGrupo === null) return;
-
-      executarGravacao(`cultos_app/membros/${id}`, null, true);
-      const novoId = nomeFinal.replace(/[.#$\[\]]/g, "_");
-      executarGravacao(`cultos_app/membros/${novoId}`, { nome: nomeFinal, categoria: catAtual, grupo: novoGrupo });
-      renderizarListaMembrosCadastrados();
-    }
-
-    function removerMembro(id, nome) {
-      if (confirm(`Deseja remover ${nome} do cadastro permanente?`)) {
-        executarGravacao(`cultos_app/membros/${id}`, null, true);
-        renderizarListaMembrosCadastrados();
-      }
-    }
-
-    function renderizarListaMembrosCadastrados() {
-      const div = document.getElementById('lista-membros-cadastrados');
-      const badgeTotal = document.getElementById('total-membros-badge');
-      const chaves = Object.keys(window.membrosCadastrados);
-      if (badgeTotal) badgeTotal.innerText = `Total: ${chaves.length}`;
-      if (chaves.length === 0) { div.innerHTML = '<p style="color:#888; text-align:center;">Nenhum membro cadastrado ainda.</p>'; return; }
-
-      let html = '';
-      CATEGORIAS.forEach(cat => {
-        const membrosCat = chaves.filter(k => window.membrosCadastrados[k].categoria === cat);
-        if (membrosCat.length > 0) {
-          html += `<h4 style="margin-top:14px; margin-bottom:4px; color:#1c3d5a; border-bottom:1px solid #c8e6c9; padding-bottom:2px; font-weight:bold;">${cat} (${membrosCat.length})</h4>`;
-          membrosCat.forEach(k => {
-            const m = window.membrosCadastrados[k];
-            const grupoStr = m.grupo || 'Grupo 1';
-            html += `
-              <div class="member-manage-item">
-                <div class="member-manage-info">
-                  <span class="member-manage-name">${m.nome}</span>
-                  <span class="member-manage-group">(${grupoStr})</span>
-                </div>
-                <div class="member-manage-actions">
-                  <button class="member-action-btn edit" onclick="editarMembro('${k}', '${m.nome}', '${m.categoria}', '${grupoStr}')">✏️ Editar</button>
-                  <button class="member-action-btn delete" onclick="removerMembro('${k}', '${m.nome}')">✕ Excluir</button>
-                </div>
-              </div>
-            `;
-          });
-        }
-      });
-      div.innerHTML = html;
-    }
-
-    function getChaveCulto() {
-      const data = inputData.value;
-      const tipo = document.getElementById('culto-tipo').value.replace(/\s+/g, '_');
-      return `${data}_${tipo}`;
-    }
-
-    function alternarStatusMembro(membroId) {
-      const chaveCulto = getChaveCulto();
-      if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
-      if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
-
-      const registroAtual = window.registrosCultos[chaveCulto].presencas[membroId] || 'ausente';
-      const novoStatus = (registroAtual === 'presente') ? 'ausente' : 'presente';
-
-      window.registrosCultos[chaveCulto].presencas[membroId] = novoStatus;
-      executarGravacao(`cultos_app/registros/${chaveCulto}/presencas/${membroId}`, novoStatus);
-      carregarChamadaCulto();
-    }
-
-    function adicionarPresencaRapida(membroId) {
-      const chaveCulto = getChaveCulto();
-      if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
-      if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
-
-      window.registrosCultos[chaveCulto].presencas[membroId] = 'presente';
-      executarGravacao(`cultos_app/registros/${chaveCulto}/presencas/${membroId}`, 'presente');
-      document.getElementById('busca-membro').value = '';
-      document.getElementById('search-results-box').style.display = 'none';
-      carregarChamadaCulto();
-    }
-
-    function marcarTodos(status) {
-      const chaveCulto = getChaveCulto();
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-      const objetoPresencas = {};
-      chavesMembros.forEach(id => { objetoPresencas[id] = status; });
-      if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = {};
-      window.registrosCultos[chaveCulto].presencas = objetoPresencas;
-      executarGravacao(`cultos_app/registros/${chaveCulto}/presencas`, objetoPresencas);
-      carregarChamadaCulto();
-    }
-
-    function adicionarVisitante() {
-      const input = document.getElementById('input-nome-visitante');
-      let nome = input.value.trim();
-      if (!nome) nome = "—";
-      const chaveCulto = getChaveCulto();
-      if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = {};
-      let listaVisitantes = window.registrosCultos[chaveCulto].visitantesLista || [];
-      listaVisitantes.push(nome);
-      window.registrosCultos[chaveCulto].visitantesLista = listaVisitantes;
-      executarGravacao(`cultos_app/registros/${chaveCulto}/visitantesLista`, listaVisitantes);
-      input.value = '';
-      carregarChamadaCulto();
-    }
-
-    function removerVisitante(index) {
-      const chaveCulto = getChaveCulto();
-      if (!window.registrosCultos[chaveCulto]) return;
-      let listaVisitantes = window.registrosCultos[chaveCulto].visitantesLista || [];
-      listaVisitantes.splice(index, 1);
-      window.registrosCultos[chaveCulto].visitantesLista = listaVisitantes;
-      executarGravacao(`cultos_app/registros/${chaveCulto}/visitantesLista`, listaVisitantes);
-      carregarChamadaCulto();
-    }
-
-    function salvarCamposEvento() {
-      const chaveCulto = getChaveCulto();
-      const louvor = document.getElementById('culto-louvor').value;
-      const palavra = document.getElementById('culto-palavra').value;
-      const textoLido = document.getElementById('culto-texto-lido').value;
-      const portao = document.getElementById('culto-portao').value;
-      const objEvento = { louvor, palavra, textoLido, portao };
-      if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = {};
-      window.registrosCultos[chaveCulto].eventoInfo = objEvento;
-      executarGravacao(`cultos_app/registros/${chaveCulto}/eventoInfo`, objEvento);
-      verificarEMarcarPresencaAuto([louvor, palavra, portao]);
-    }
-
-    function verificarEMarcarPresencaAuto(listaNomes) {
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-      const chaveCulto = getChaveCulto();
-      listaNomes.forEach(nomeDigitado => {
-        if (!nomeDigitado || nomeDigitado.trim().length < 3) return;
-        const nomeFmt = nomeDigitado.trim().toLowerCase();
-        chavesMembros.forEach(id => {
-          const nomeMembro = window.membrosCadastrados[id].nome.toLowerCase();
-          if (nomeMembro === nomeFmt || nomeMembro.includes(nomeFmt) || nomeFmt.includes(nomeMembro)) {
-            if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
-            if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
-            window.registrosCultos[chaveCulto].presencas[id] = 'presente';
-            executarGravacao(`cultos_app/registros/${chaveCulto}/presencas/${id}`, 'presente');
-          }
-        });
-      });
-    }
-
-    function filtrarMembros(termo) {
-      const box = document.getElementById('search-results-box');
-      termo = termo.trim().toLowerCase();
-      if (!termo) { box.style.display = 'none'; box.innerHTML = ''; return; }
-      const chaveCulto = getChaveCulto();
-      const presencas = window.registrosCultos[chaveCulto]?.presencas || {};
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-      const resultados = chavesMembros.filter(id => window.membrosCadastrados[id].nome.toLowerCase().includes(termo));
-      if (resultados.length === 0) {
-        box.innerHTML = '<div style="padding:10px; color:#888; text-align:center;">Nenhum membro encontrado.</div>';
-      } else {
-        let html = '';
-        resultados.forEach(id => {
-          const m = window.membrosCadastrados[id];
-          const isPresente = presencas[id] === 'presente';
-          const grupoStr = m.grupo || 'Grupo 1';
-          html += `
-            <div class="search-result-item" onclick="adicionarPresencaRapida('${id}')">
-              <span><strong>${m.nome}</strong> (${m.categoria} • ${grupoStr})</span>
-              <span style="font-size:0.8rem; padding:4px 8px; border-radius:12px; font-weight:bold; ${isPresente ? 'background:#d4edda; color:#155724;' : 'background:#1c3d5a; color:#fff;'}">
-                ${isPresente ? 'Já Presente' : '+ Marcar Presente'}
-              </span>
-            </div>
-          `;
-        });
-        box.innerHTML = html;
-      }
-      box.style.display = 'block';
-    }
-
-    function carregarChamadaCulto() {
-      const chaveCulto = getChaveCulto();
-      const registroHoje = window.registrosCultos[chaveCulto] || {};
-      const presencas = registroHoje.presencas || {};
-      const eventoInfo = registroHoje.eventoInfo || {};
-      let visitantesLista = registroHoje.visitantesLista || [];
-      if (visitantesLista.length === 0 && registroHoje.visitantesData?.qtd > 0) {
-        for(let i=0; i<registroHoje.visitantesData.qtd; i++) visitantesLista.push("—");
-      }
-
-      document.getElementById('culto-louvor').value = eventoInfo.louvor || '';
-      document.getElementById('culto-palavra').value = eventoInfo.palavra || '';
-      document.getElementById('culto-texto-lido').value = eventoInfo.textoLido || '';
-      document.getElementById('culto-portao').value = eventoInfo.portao || '';
-
-      const divChips = document.getElementById('lista-visitantes-chips');
-      divChips.innerHTML = '';
-      if (visitantesLista.length === 0) {
-        divChips.innerHTML = '<small style="color:#888;">Nenhum visitante adicionado hoje.</small>';
-      } else {
-        visitantesLista.forEach((nomeV, index) => {
-          divChips.innerHTML += `<div class="visitor-chip"><span>👤 ${nomeV}</span><button onclick="removerVisitante(${index})">✕</button></div>`;
-        });
-      }
-
-      const divPresenca = document.getElementById('lista-membros-presenca');
-      const divFolha = document.getElementById('conteudo-folha-culto');
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-
-      if (chavesMembros.length === 0) {
-        divPresenca.innerHTML = '<p style="text-align:center; color:#888;">Cadastre os membros na aba "Cadastrar Membros" primeiro.</p>';
-        divFolha.innerHTML = '<p style="text-align:center; color:#888;">Nenhum membro cadastrado.</p>';
-        return;
-      }
-
-      divPresenca.innerHTML = '';
-      let htmlFolha = `<div class="paper-title">${document.getElementById('culto-tipo').value} — ${inputData.value.split('-').reverse().join('/')}</div>`;
-      htmlFolha += `
-        <div class="info-evento-box">
-          <div><strong>🎤 Louvor:</strong> ${eventoInfo.louvor || '—'}</div>
-          <div><strong>📖 Palavra:</strong> ${eventoInfo.palavra || '—'}</div>
-          <div><strong>📜 Texto Lido:</strong> ${eventoInfo.textoLido || '—'}</div>
-          <div><strong>🚪 Portão:</strong> ${eventoInfo.portao || '—'}</div>
-        </div>
-      `;
-
-      let totalP = 0;
-      CATEGORIAS.forEach(cat => {
-        const membrosCat = chavesMembros.filter(k => window.membrosCadastrados[k].categoria === cat);
-        if (membrosCat.length > 0) {
-          let htmlPresencaCat = '';
-          let tabelaFolhaCat = '';
-          membrosCat.forEach(id => {
-            const m = window.membrosCadastrados[id];
-            const status = presencas[id] || 'ausente'; 
-            const grupoStr = m.grupo || 'Grupo 1';
-            if (status === 'presente') {
-              totalP++;
-              htmlPresencaCat += `
-                <div class="member-select-item">
-                  <div class="member-info"><span><strong>${m.nome}</strong></span><span class="member-tag">${cat} • ${grupoStr}</span></div>
-                  <button class="status-badge-btn presente" onclick="alternarStatusMembro('${id}')">Presente</button>
-                </div>
-              `;
-              tabelaFolhaCat += `<tr class="row-presente"><td style="width:50%;">${m.nome}</td><td style="width:25%;">${cat}</td><td style="width:25%;">${grupoStr}</td></tr>`;
-            }
-          });
-          if (htmlPresencaCat !== '') divPresenca.innerHTML += `<h4 style="margin-top:12px; color:#1c3d5a; border-bottom:1px solid #ddd; font-weight:bold;">${cat}</h4>` + htmlPresencaCat;
-          if (tabelaFolhaCat !== '') {
-            htmlFolha += `
-              <div class="table-responsive">
-                <table class="report-table">
-                  <thead><tr><th style="width:50%;">${cat} (Presentes)</th><th style="width:25%;">Classe</th><th style="width:25%;">Grupo</th></tr></thead>
-                  <tbody>${tabelaFolhaCat}</tbody>
-                </table>
-              </div>
-            `;
-          }
-        }
-      });
-
-      if (visitantesLista.length > 0) {
-        let tabelaVisitantes = '';
-        visitantesLista.forEach((vNome) => {
-          tabelaVisitantes += `<tr class="row-presente"><td style="width:50%;">${vNome}</td><td style="width:25%;">Visitantes</td><td style="width:25%;">—</td></tr>`;
-        });
-        htmlFolha += `
-          <div class="table-responsive">
-            <table class="report-table">
-              <thead><tr><th style="width:50%;">VISITANTES (${visitantesLista.length})</th><th style="width:25%;">Classe</th><th style="width:25%;">Grupo</th></tr></thead>
-              <tbody>${tabelaVisitantes}</tbody>
-            </table>
-          </div>
-        `;
-      }
-
-      if (totalP === 0 && visitantesLista.length === 0) divPresenca.innerHTML = '<p style="text-align:center; color:#888; padding: 15px;">Nenhum membro ou visitante marcado como presente ainda.</p>';
-
-      const totalGeralPresentes = totalP + visitantesLista.length;
-      const elemContador = document.getElementById('floating-presenca-count');
-      if (elemContador) elemContador.innerText = `${totalGeralPresentes}`;
-
-      htmlFolha += `
-        <div style="margin-top:15px; background:#f8f9fa; padding:10px; border-radius:6px; font-size:0.85rem; color:#333;">
-          <div><strong>Membros Presentes:</strong> ${totalP}</div>
-          <div><strong>Visitantes:</strong> ${visitantesLista.length}</div>
-          <hr style="margin:5px 0;">
-          <div style="font-size:0.95rem; font-weight:bold; color:#1b4332;">TOTAL GERAL NO CULTO: ${totalGeralPresentes} Pessoas</div>
-        </div>
-      `;
-      divFolha.innerHTML = htmlFolha;
-    }
-
-    function renderizarGraficoMensal(labels, dados) {
-      const box = document.getElementById('box-grafico-mensal');
-      const ctx = document.getElementById('graficoFrequencia').getContext('2d');
-      if (labels.length === 0) { box.style.display = 'none'; return; }
-      box.style.display = 'block';
-      if (chartInstancia) chartInstancia.destroy();
-
-      chartInstancia = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Total de Presentes por Culto',
-            data: dados,
-            borderColor: '#2d6a4f',
-            backgroundColor: 'rgba(45, 106, 79, 0.1)',
-            fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#b81d24'
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-      });
-    }
-
-    function gerarRelatorioMensal() {
-      const mesAno = document.getElementById('filtro-mes-ano').value;
-      const tipoRelatorio = document.getElementById('filtro-tipo-relatorio').value;
-      const filtroGrupo = document.getElementById('filtro-grupo-assistencia').value;
-      const divConteudo = document.getElementById('conteudo-folha-mensal');
-      if (!mesAno) return;
-
-      const [ano, mes] = mesAno.split('-');
-      const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-      const mesNomeExtenso = `${nomeMeses[parseInt(mes)-1]} de ${ano}`;
-      const registros = window.registrosCultos || {};
-      const chavesCulto = Object.keys(registros);
-
-      if (tipoRelatorio === 'RANKING_GRUPOS') {
-        const cultosDoMes = chavesCulto.filter(chave => {
-          if (!chave.startsWith(mesAno)) return false;
-          if (filtroGrupo === 'EBD') return chave.includes('EBD');
-          if (filtroGrupo === 'MADRUGADA') return chave.includes('Madrugada');
-          if (filtroGrupo === 'DIARIOS') return !chave.includes('EBD') && !chave.includes('Madrugada');
-          return true;
-        });
-
-        let contagemGrupos = { "Grupo 1": 0, "Grupo 2": 0, "Grupo 3": 0 };
-        cultosDoMes.forEach(chave => {
-          const presencas = registros[chave]?.presencas || {};
-          Object.keys(presencas).forEach(mId => {
-            if (presencas[mId] === 'presente') {
-              const grp = window.membrosCadastrados[mId]?.grupo || 'Grupo 1';
-              if (contagemGrupos[grp] !== undefined) contagemGrupos[grp]++;
-            }
-          });
-        });
-
-        const ranking = Object.keys(contagemGrupos).map(grp => ({ nome: grp, total: contagemGrupos[grp] })).sort((a,b) => b.total - a.total);
-        renderizarGraficoMensal(ranking.map(r => r.nome), ranking.map(r => r.total));
-
-        let descEvento = filtroGrupo === 'EBD' ? 'Escola Bíblica (EBD)' : filtroGrupo === 'MADRUGADA' ? 'Madrugada' : filtroGrupo === 'DIARIOS' ? 'Cultos Diários' : 'Geral (Todos os Eventos)';
-
-        divConteudo.innerHTML = `
-          <div class="paper-title">🏆 ASSIDUIDADE POR GRUPOS — ${mesNomeExtenso}</div>
-          <p style="text-align:center; font-size:0.85rem; color:#666; margin-bottom:15px;">Filtro do Evento: <strong>${descEvento}</strong></p>
-
-          <div class="podium-box">
-            <div class="podium-card first">
-              <div style="font-size:1.5rem;">🥇</div>
-              <div class="podium-title">1º LUGAR</div>
-              <div><strong>${ranking[0].nome}</strong></div>
-              <div class="podium-val">${ranking[0].total} Presenças</div>
-            </div>
-            <div class="podium-card">
-              <div style="font-size:1.5rem;">🥈</div>
-              <div class="podium-title">2º LUGAR</div>
-              <div><strong>${ranking[1].nome}</strong></div>
-              <div class="podium-val">${ranking[1].total} Presenças</div>
-            </div>
-            <div class="podium-card">
-              <div style="font-size:1.5rem;">🥉</div>
-              <div class="podium-title">3º LUGAR</div>
-              <div><strong>${ranking[2].nome}</strong></div>
-              <div class="podium-val">${ranking[2].total} Presenças</div>
-            </div>
-          </div>
-
-          <h4 style="color:#1b4332; border-bottom:1px solid #2d6a4f; padding-bottom:4px; margin-bottom:8px;">Tabela Comparativa de Grupos:</h4>
-          
-          <div class="table-responsive">
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th style="width:25%;">Posição</th>
-                  <th style="width:45%;">Grupo de Assistência</th>
-                  <th style="width:30%; text-align:center;">Acumulado de Presenças</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td><strong>1º Lugar</strong></td><td>${ranking[0].nome}</td><td style="text-align:center; font-weight:bold; color:#155724;">${ranking[0].total}</td></tr>
-                <tr><td><strong>2º Lugar</strong></td><td>${ranking[1].nome}</td><td style="text-align:center; font-weight:bold;">${ranking[1].total}</td></tr>
-                <tr><td><strong>3º Lugar</strong></td><td>${ranking[2].nome}</td><td style="text-align:center; font-weight:bold;">${ranking[2].total}</td></tr>
-              </tbody>
-            </table>
-          </div>
-        `;
-        return;
-      }
-
-      if (tipoRelatorio === 'GERAL_MEMBROS' || tipoRelatorio === 'ALERTAS_AUSENCIA') {
-        const cultosDoMes = chavesCulto.filter(chave => chave.startsWith(mesAno));
-        let totalCultosNoMes = cultosDoMes.length;
-        let chavesMembros = Object.keys(window.membrosCadastrados);
-
-        if (filtroGrupo === 'Grupo 1' || filtroGrupo === 'Grupo 2' || filtroGrupo === 'Grupo 3') {
-          chavesMembros = chavesMembros.filter(id => (window.membrosCadastrados[id].grupo || 'Grupo 1') === filtroGrupo);
-        }
-
-        if (chavesMembros.length === 0) {
-          divConteudo.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Nenhum membro encontrado para o filtro selecionado.</p>`;
-          renderizarGraficoMensal([], []);
-          return;
-        }
-
-        chavesMembros.sort((a,b) => window.membrosCadastrados[a].nome.localeCompare(window.membrosCadastrados[b].nome));
-
-        let tabelaLinhasGeral = '';
-        let contAlerta = 0;
-
-        chavesMembros.forEach(membroId => {
-          const m = window.membrosCadastrados[membroId];
-          let countPresencas = 0;
-          cultosDoMes.forEach(chave => { if (registros[chave]?.presencas?.[membroId] === 'presente') countPresencas++; });
-
-          let porc = totalCultosNoMes > 0 ? ((countPresencas / totalCultosNoMes) * 100).toFixed(0) : 0;
-          const isAlerta = porc < 30;
-
-          if (tipoRelatorio === 'ALERTAS_AUSENCIA' && !isAlerta) return;
-          if (isAlerta) contAlerta++;
-
-          tabelaLinhasGeral += `
-            <tr class="${isAlerta ? 'row-alerta' : ''}">
-              <td style="width:38%;"><strong>${m.nome}</strong></td>
-              <td style="width:20%;">${m.categoria}</td>
-              <td style="width:16%;">${m.grupo || 'Grupo 1'}</td>
-              <td style="width:14%; text-align:center;"><strong>${countPresencas}</strong> / ${totalCultosNoMes}</td>
-              <td style="width:12%; text-align:center; font-weight:bold; color:${porc >= 70 ? '#155724' : porc >= 40 ? '#856404' : '#721c24'};">${porc}%</td>
-            </tr>
-          `;
-        });
-
-        let labelsGrafico = [];
-        let dadosGrafico = [];
-        cultosDoMes.sort().forEach(chave => {
-          const reg = registros[chave];
-          const dataFmt = chave.split('_')[0].split('-').reverse().slice(0,2).join('/');
-          let countM = 0;
-          Object.keys(reg.presencas || {}).forEach(mId => { if (reg.presencas[mId] === 'presente') countM++; });
-          let qVis = reg.visitantesLista ? reg.visitantesLista.length : (reg.visitantesData?.qtd || 0);
-          labelsGrafico.push(dataFmt);
-          dadosGrafico.push(countM + qVis);
-        });
-
-        renderizarGraficoMensal(labelsGrafico, dadosGrafico);
-
-        divConteudo.innerHTML = `
-          <div class="paper-title">${tipoRelatorio === 'ALERTAS_AUSENCIA' ? '⚠️ ALERTAS DE ASSISTÊNCIA (<30%)' : 'RELATÓRIO GERAL DE MEMBROS'} (${mesNomeExtenso})</div>
-          
-          <div class="card-kpi-grid">
-            <div class="card-kpi"><div class="card-kpi-val">${totalCultosNoMes}</div><div class="card-kpi-lbl">Total Cultos</div></div>
-            <div class="card-kpi"><div class="card-kpi-val">${chavesMembros.length}</div><div class="card-kpi-lbl">Membros (${filtroGrupo})</div></div>
-            <div class="card-kpi" style="background:#fff3cd; border-color:#ffeeba;"><div class="card-kpi-val" style="color:#856404;">${contAlerta}</div><div class="card-kpi-lbl">Em Alerta (&lt;30%)</div></div>
-          </div>
-
-          <h4 style="color:#1b4332; border-bottom:1px solid #2d6a4f; padding-bottom:4px; margin-bottom:8px;">Frequência e Porcentagem de Assiduidade:</h4>
-          
-          <div class="table-responsive">
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th style="width:38%;">Membro</th>
-                  <th style="width:20%;">Classe</th>
-                  <th style="width:16%;">Grupo</th>
-                  <th style="width:14%; text-align:center;">Presenças</th>
-                  <th style="width:12%; text-align:center;">%</th>
-                </tr>
-              </thead>
-              <tbody>${tabelaLinhasGeral || '<tr><td colspan="5" style="text-align:center;">Nenhum membro encontrado.</td></tr>'}</tbody>
-            </table>
-          </div>
-        `;
-        return;
-      }
-
-      if (tipoRelatorio === 'MEMBRO') {
-        renderizarGraficoMensal([], []);
-        const membroId = document.getElementById('filtro-membro-id').value;
-        const membroObj = window.membrosCadastrados[membroId];
-        if (!membroId || !membroObj) { divConteudo.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Nenhum membro selecionado.</p>`; return; }
-
-        const cultosDoMes = chavesCulto.filter(chave => chave.startsWith(mesAno)).sort();
-        let totalCultosNoMes = cultosDoMes.length;
-        let presencasMembro = 0;
-        let tabelaDatas = '';
-
-        cultosDoMes.forEach(chave => {
-          const reg = registros[chave];
-          const dataFmt = chave.split('_')[0].split('-').reverse().join('/');
-          const tipoFmt = chave.split('_').slice(1).join(' ').replace(/_/g, ' ');
-          const isPresente = reg.presencas?.[membroId] === 'presente';
-          if (isPresente) presencasMembro++;
-
-          tabelaDatas += `
-            <tr style="${isPresente ? 'background-color:#e8f5e9;' : ''}">
-              <td style="width:30%;"><strong>${dataFmt}</strong></td>
-              <td style="width:45%;">${tipoFmt}</td>
-              <td style="width:25%; font-weight:bold; color:${isPresente ? '#155724' : '#721c24'};">${isPresente ? '✅ Presente' : '❌ Ausente'}</td>
-            </tr>
-          `;
-        });
-
-        const porc = totalCultosNoMes > 0 ? ((presencasMembro / totalCultosNoMes) * 100).toFixed(0) : 0;
-
-        divConteudo.innerHTML = `
-          <div class="paper-title">RELATÓRIO DE FREQUÊNCIA INDIVIDUAL</div>
-          
-          <div style="background:#fdfbf7; border:1px solid #dcd3c1; padding:12px; border-radius:8px; margin-bottom:15px; font-size:0.9rem; color:#333;">
-            <div><strong>Membro:</strong> ${membroObj.nome}</div>
-            <div><strong>Classe:</strong> ${membroObj.categoria} | <strong>Grupo:</strong> ${membroObj.grupo || 'Grupo 1'}</div>
-            <div><strong>Mês de Referência:</strong> ${mesNomeExtenso}</div>
-          </div>
-
-          <div class="card-kpi-grid">
-            <div class="card-kpi"><div class="card-kpi-val">${totalCultosNoMes}</div><div class="card-kpi-lbl">Total Cultos</div></div>
-            <div class="card-kpi"><div class="card-kpi-val">${presencasMembro}</div><div class="card-kpi-lbl">Presenças</div></div>
-            <div class="card-kpi"><div class="card-kpi-val">${porc}%</div><div class="card-kpi-lbl">Assiduidade</div></div>
-          </div>
-
-          <h4 style="color:#1b4332; border-bottom:1px solid #2d6a4f; padding-bottom:4px; margin-bottom:8px;">Histórico Detalhado no Mês:</h4>
-          
-          <div class="table-responsive">
-            <table class="report-table">
-              <thead><tr><th style="width:30%;">Data</th><th style="width:45%;">Culto</th><th style="width:25%;">Status</th></tr></thead>
-              <tbody>${tabelaDatas || '<tr><td colspan="3" style="text-align:center;">Nenhum culto registrado no mês.</td></tr>'}</tbody>
-            </table>
-          </div>
-        `;
-        return;
-      }
-
-      const cultosDoMes = chavesCulto.filter(chave => {
-        const dataCulto = chave.split('_')[0];
-        if (!dataCulto.startsWith(mesAno)) return false;
-        const isEbd = chave.includes('EBD');
-        return tipoRelatorio === 'EBD' ? isEbd : !isEbd;
-      });
-
-      if (cultosDoMes.length === 0) {
-        divConteudo.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Nenhum registro de ${tipoRelatorio === 'EBD' ? 'EBD' : 'Cultos Diários'} encontrado para ${mesNomeExtenso}.</p>`;
-        renderizarGraficoMensal([], []);
-        return;
-      }
-
-      let totalCultos = cultosDoMes.length;
-      let somaGeralPresentes = 0;
-      let somaMembros = 0;
-      let somaVisitantes = 0;
-      let resumoCategorias = {};
-      CATEGORIAS.forEach(c => resumoCategorias[c] = 0);
-
-      let tabelaLinhasCultos = '';
-      let labelsGrafico = [];
-      let dadosGrafico = [];
-
-      cultosDoMes.sort().forEach(chave => {
-        const reg = registros[chave];
-        const dataFmt = chave.split('_')[0].split('-').reverse().join('/');
-        const tipoFmt = chave.split('_').slice(1).join(' ').replace(/_/g, ' ');
-
-        let presencas = reg.presencas || {};
-        let countMembrosCulto = 0;
-
-        Object.keys(presencas).forEach(membroId => {
-          if (presencas[membroId] === 'presente') {
-            const mObj = window.membrosCadastrados[membroId];
-            if (filtroGrupo === 'TODOS' || (mObj && (mObj.grupo || 'Grupo 1') === filtroGrupo)) {
-              countMembrosCulto++;
-              const cat = mObj?.categoria;
-              if (cat && resumoCategorias[cat] !== undefined) resumoCategorias[cat]++;
-            }
-          }
-        });
-
-        let countVisitantes = reg.visitantesLista ? reg.visitantesLista.length : (reg.visitantesData?.qtd || 0);
-        let totalCulto = countMembrosCulto + countVisitantes;
-
-        somaMembros += countMembrosCulto;
-        somaVisitantes += countVisitantes;
-        somaGeralPresentes += totalCulto;
-
-        labelsGrafico.push(dataFmt.slice(0,5));
-        dadosGrafico.push(totalCulto);
-
-        tabelaLinhasCultos += `
-          <tr>
-            <td style="width:20%;"><strong>${dataFmt}</strong></td>
-            <td style="width:35%;">${tipoFmt}</td>
-            <td style="width:15%; text-align:center;">${countMembrosCulto}</td>
-            <td style="width:15%; text-align:center;">${countVisitantes}</td>
-            <td style="width:15%; text-align:center;"><strong>${totalCulto}</strong></td>
-          </tr>
-        `;
-      });
-
-      renderizarGraficoMensal(labelsGrafico, dadosGrafico);
-
-      let mediaPresentes = (somaGeralPresentes / totalCultos).toFixed(1);
-
-      let html = `
-        <div class="paper-title">RELATÓRIO MENSAL — ${tipoRelatorio === 'EBD' ? 'ESCOLA BÍBLICA (EBD)' : 'CULTOS DIÁRIOS'} (${mesNomeExtenso})</div>
-
-        <div class="card-kpi-grid">
-          <div class="card-kpi"><div class="card-kpi-val">${totalCultos}</div><div class="card-kpi-lbl">Total Cultos</div></div>
-          <div class="card-kpi"><div class="card-kpi-val">${somaGeralPresentes}</div><div class="card-kpi-lbl">Total Freq.</div></div>
-          <div class="card-kpi"><div class="card-kpi-val">${mediaPresentes}</div><div class="card-kpi-lbl">Média / Culto</div></div>
-        </div>
-
-        <h4 style="color:#1b4332; border-bottom:1px solid #2d6a4f; padding-bottom:4px; margin-bottom:8px;">Total de Frequências por Categoria no Mês:</h4>
-        
-        <div class="table-responsive">
-          <table class="report-table" style="margin-bottom:15px;">
-            <thead><tr><th style="width:60%;">Categoria / Classe</th><th style="width:40%;">Acumulado no Mês</th></tr></thead>
-            <tbody>
-      `;
-
-      CATEGORIAS.forEach(cat => {
-        if (resumoCategorias[cat] > 0) html += `<tr><td>${cat}</td><td><strong>${resumoCategorias[cat]} presenças</strong></td></tr>`;
-      });
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-
-        <h4 style="color:#1b4332; border-bottom:1px solid #2d6a4f; padding-bottom:4px; margin-bottom:8px;">Histórico Detalhado dos Cultos:</h4>
-        
-        <div class="table-responsive">
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th style="width:20%;">Data</th>
-                <th style="width:35%;">Tipo</th>
-                <th style="width:15%; text-align:center;">Membros</th>
-                <th style="width:15%; text-align:center;">Visitantes</th>
-                <th style="width:15%; text-align:center;">Total</th>
-              </tr>
-            </thead>
-            <tbody>${tabelaLinhasCultos}</tbody>
-          </table>
-        </div>
-      `;
-
-      divConteudo.innerHTML = html;
-    }
-
-    function exportarExcelCSV() {
-      const mesAno = document.getElementById('filtro-mes-ano').value;
-      if (!mesAno) return;
-      const cultosDoMes = Object.keys(window.registrosCultos || {}).filter(chave => chave.startsWith(mesAno));
-      let totalCultos = cultosDoMes.length;
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-
-      let csv = "Membro;Classe;Grupo;Presencas;Total Cultos;Porcentagem\n";
-      chavesMembros.sort((a,b) => window.membrosCadastrados[a].nome.localeCompare(window.membrosCadastrados[b].nome));
-      chavesMembros.forEach(id => {
-        const m = window.membrosCadastrados[id];
-        let presencas = 0;
-        cultosDoMes.forEach(chave => { if (window.registrosCultos[chave]?.presencas?.[id] === 'presente') presencas++; });
-        let porc = totalCultos > 0 ? ((presencas / totalCultos) * 100).toFixed(0) : 0;
-        csv += `"${m.nome}";"${m.categoria}";"${m.grupo || 'Grupo 1'}";${presencas};${totalCultos};${porc}%\n`;
-      });
-
-      const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `Frequencia_ICM_PINHOS_${mesAno}.csv`;
-      link.click();
-    }
-
-    function gerarECompartilharImagem(elementId, nomeArquivoPrefix) {
-      const folha = document.getElementById(elementId);
-      const capturaveis = folha.querySelectorAll('.table-responsive');
+    // ====== NAVEGAÇÃO DE ABAS ======
+    function switchTab(index) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       
-      folha.classList.add('rendering-mode');
-      capturaveis.forEach(el => { el.style.overflow = 'visible'; });
-
-      html2canvas(folha, { scale: 3, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1200 }).then(canvas => {
-        folha.classList.remove('rendering-mode');
-        capturaveis.forEach(el => { el.style.overflow = 'auto'; });
-
-        canvas.toBlob(blob => {
-          const file = new File([blob], `${nomeArquivoPrefix}_${new Date().toISOString().split('T')[0]}.png`, { type: 'image/png' });
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ files: [file], title: 'Frequência ICM Pinhos', text: 'Segue o relatório de frequência.' }).catch(() => {});
-          } else {
-            const link = document.createElement('a');
-            link.download = file.name;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            alert("Imagem gerada com sucesso!");
-          }
-        }, 'image/png', 1.0);
-      });
+      document.getElementById(`tab-${index}`).classList.add('active');
+      document.querySelectorAll('.tab-btn')[index].classList.add('active');
+      
+      SecureLogger.log(`Aberta aba ${index}`, 'info');
     }
 
-    function gerarECompartilharPDF(elementId, nomeArquivoPrefix) {
-      const folha = document.getElementById(elementId);
-      const capturaveis = folha.querySelectorAll('.table-responsive');
-
-      folha.classList.add('rendering-mode');
-      capturaveis.forEach(el => { el.style.overflow = 'visible'; });
-
-      html2canvas(folha, { scale: 3, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1200 }).then(canvas => {
-        folha.classList.remove('rendering-mode');
-        capturaveis.forEach(el => { el.style.overflow = 'auto'; });
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-          position -= pageHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-
-        const blob = pdf.output('blob');
-        const file = new File([blob], `${nomeArquivoPrefix}_${new Date().toISOString().split('T')[0]}.pdf`, { type: 'application/pdf' });
-
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: 'Relatório em PDF - ICM Pinhos', text: 'Segue o relatório de frequência em PDF.' }).catch(() => {});
-        } else {
-          pdf.save(file.name);
-          alert("PDF gerado e baixado!");
-        }
-      });
-    }
-
-    function enviarTextoWhatsApp() {
-      const dataBr = inputData.value.split('-').reverse().join('/');
-      const tipo = document.getElementById('culto-tipo').value;
-      const chaveCulto = getChaveCulto();
-      const registroHoje = window.registrosCultos[chaveCulto] || {};
-      const presencas = registroHoje.presencas || {};
-      const eventoInfo = registroHoje.eventoInfo || {};
-      const chavesMembros = Object.keys(window.membrosCadastrados);
-
-      let visitantesLista = registroHoje.visitantesLista || [];
-      if (visitantesLista.length === 0 && registroHoje.visitantesData?.qtd > 0) {
-        for(let i=0; i<registroHoje.visitantesData.qtd; i++) visitantesLista.push("—");
+    // ====== CARREGAR DADOS ======
+    function carregarDados() {
+      try {
+        const membros = secureStorage.get('membros') || [];
+        const frequencias = secureStorage.get('frequencias') || [];
+        
+        renderizarMembros(membros);
+        atualizarEstatisticas(membros, frequencias);
+        
+        SecureLogger.log('Dados carregados com sucesso', 'info');
+      } catch (error) {
+        SecureLogger.error('Erro ao carregar dados', error.message);
       }
-
-      let totalP = 0;
-      let resumoCategorias = '';
-
-      CATEGORIAS.forEach(cat => {
-        const membrosCat = chavesMembros.filter(k => window.membrosCadastrados[k].categoria === cat);
-        if (membrosCat.length > 0) {
-          let pCat = 0;
-          membrosCat.forEach(id => {
-            const st = presencas[id] || 'ausente';
-            if (st === 'presente') { pCat++; totalP++; }
-          });
-          if (pCat > 0) resumoCategorias += `• *${cat}:* ${pCat} presente(s)\n`;
-        }
-      });
-
-      if (visitantesLista.length > 0) resumoCategorias += `• *Visitantes:* ${visitantesLista.length} presente(s)\n`;
-      const totalPresentes = totalP + visitantesLista.length;
-
-      let msg = `*⛪ FREQUÊNCIA DE CULTO — ICM PINHOS*\n`;
-      msg += `📅 *Data:* ${dataBr} | *Culto:* ${tipo}\n\n`;
-      msg += `🎤 *Louvor:* ${eventoInfo.louvor || '—'}\n`;
-      msg += `📖 *Palavra:* ${eventoInfo.palavra || '—'}\n`;
-      msg += `📜 *Texto Lido:* ${eventoInfo.textoLido || '—'}\n`;
-      msg += `🚪 *Portão:* ${eventoInfo.portao || '—'}\n\n`;
-      msg += `📊 *RESUMO DE PRESENTES POR CLASSE:*\n${resumoCategorias}\n`;
-      msg += `👥 *Membros Presentes:* ${totalP}\n`;
-      msg += `🤝 *Visitantes:* ${visitantesLista.length} ${visitantesLista.length > 0 ? `(${visitantesLista.join(', ')})` : ''}\n`;
-      msg += `-----------------------------------\n`;
-      msg += `🔥 *TOTAL GERAL DE PRESENTES:* ${totalPresentes}\n`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    function enviarTextoWhatsAppMensal() {
-      const mesAno = document.getElementById('filtro-mes-ano').value;
-      const tipoRelatorio = document.getElementById('filtro-tipo-relatorio').value;
-      if (!mesAno) return;
+    // ====== ADICIONAR MEMBRO ======
+    function adicionarMembro() {
+      try {
+        const nome = document.getElementById('newMemberName').value;
+        const grupo = document.getElementById('newMemberGroup').value;
 
-      const [ano, mes] = mesAno.split('-');
-      const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-      const mesNomeExtenso = `${nomeMeses[parseInt(mes)-1]} de ${ano}`;
+        // Validar nome
+        const nomeValidado = Validadores.validarNomeMembro(nome);
 
-      if (tipoRelatorio === 'RANKING_GRUPOS') {
-        const cultosDoMes = Object.keys(window.registrosCultos || {}).filter(chave => chave.startsWith(mesAno));
-        let contagemGrupos = { "Grupo 1": 0, "Grupo 2": 0, "Grupo 3": 0 };
-        cultosDoMes.forEach(chave => {
-          const presencas = window.registrosCultos[chave]?.presencas || {};
-          Object.keys(presencas).forEach(mId => {
-            if (presencas[mId] === 'presente') {
-              const grp = window.membrosCadastrados[mId]?.grupo || 'Grupo 1';
-              if (contagemGrupos[grp] !== undefined) contagemGrupos[grp]++;
-            }
-          });
+        const membros = secureStorage.get('membros') || [];
+        
+        // Verificar duplicata
+        if (membros.some(m => m.nome.toLowerCase() === nomeValidado.toLowerCase())) {
+          alert('⚠️ Este membro já existe!');
+          return;
+        }
+
+        membros.push({
+          id: Date.now(),
+          nome: nomeValidado,
+          grupo: grupo,
+          dataCriacao: new Date().toISOString()
         });
-        const ranking = Object.keys(contagemGrupos).map(grp => ({ nome: grp, total: contagemGrupos[grp] })).sort((a,b) => b.total - a.total);
 
-        let msg = `*🏆 ASSIDUIDADE POR GRUPOS — ICM PINHOS*\n`;
-        msg += `📅 *Período:* ${mesNomeExtenso}\n\n`;
-        msg += `🥇 *1º Lugar:* ${ranking[0].nome} (${ranking[0].total} presenças)\n`;
-        msg += `🥈 *2º Lugar:* ${ranking[1].nome} (${ranking[1].total} presenças)\n`;
-        msg += `🥉 *3º Lugar:* ${ranking[2].nome} (${ranking[2].total} presenças)\n`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        return;
+        secureStorage.set('membros', membros);
+        document.getElementById('newMemberName').value = '';
+        
+        carregarDados();
+        alert('✅ Membro adicionado com sucesso!');
+        SecureLogger.log(`Membro adicionado: ${nomeValidado}`, 'info');
+      } catch (error) {
+        alert(`❌ Erro: ${error.message}`);
+        SecureLogger.error('Erro ao adicionar membro', error.message);
       }
-
-      if (tipoRelatorio === 'GERAL_MEMBROS' || tipoRelatorio === 'ALERTAS_AUSENCIA') {
-        const cultosDoMes = Object.keys(window.registrosCultos || {}).filter(chave => chave.startsWith(mesAno));
-        let totalCultos = cultosDoMes.length;
-        const chavesMembros = Object.keys(window.membrosCadastrados);
-        chavesMembros.sort((a,b) => window.membrosCadastrados[a].nome.localeCompare(window.membrosCadastrados[b].nome));
-
-        let msg = `*👥 RELATÓRIO MENSAL — ICM PINHOS*\n`;
-        msg += `📅 *Período:* ${mesNomeExtenso} | Cultos: ${totalCultos}\n\n`;
-
-        chavesMembros.forEach(id => {
-          const m = window.membrosCadastrados[id];
-          let presencas = 0;
-          cultosDoMes.forEach(chave => { if (window.registrosCultos[chave]?.presencas?.[id] === 'presente') presencas++; });
-          let porc = totalCultos > 0 ? ((presencas / totalCultos) * 100).toFixed(0) : 0;
-          if (tipoRelatorio === 'ALERTAS_AUSENCIA' && porc >= 30) return;
-          msg += `• *${m.nome}*: ${presencas}/${totalCultos} (${porc}%)\n`;
-        });
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        return;
-      }
-
-      if (tipoRelatorio === 'MEMBRO') {
-        const membroId = document.getElementById('filtro-membro-id').value;
-        const membroObj = window.membrosCadastrados[membroId];
-        if (!membroObj) return;
-
-        const cultosDoMes = Object.keys(window.registrosCultos || {}).filter(chave => chave.startsWith(mesAno));
-        let total = cultosDoMes.length;
-        let presencas = 0;
-        cultosDoMes.forEach(chave => { if (window.registrosCultos[chave]?.presencas?.[membroId] === 'presente') presencas++; });
-        let porc = total > 0 ? ((presencas / total) * 100).toFixed(0) : 0;
-
-        let msg = `*👤 RELATÓRIO INDIVIDUAL DE FREQUÊNCIA*\n`;
-        msg += `⛪ *ICM PINHOS*\n\n`;
-        msg += `👤 *Membro:* ${membroObj.nome}\n`;
-        msg += `🏷️ *Classe:* ${membroObj.categoria} (${membroObj.grupo || 'Grupo 1'})\n`;
-        msg += `📅 *Período:* ${mesNomeExtenso}\n\n`;
-        msg += `✅ *Presenças:* ${presencas} de ${total} cultos\n`;
-        msg += `📈 *Assiduidade:* ${porc}%\n`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        return;
-      }
-
-      const registros = window.registrosCultos || {};
-      const cultosDoMes = Object.keys(registros).filter(chave => {
-        if (!chave.startsWith(mesAno)) return false;
-        const isEbd = chave.includes('EBD');
-        return tipoRelatorio === 'EBD' ? isEbd : !isEbd;
-      });
-
-      let totalCultos = cultosDoMes.length;
-      let somaGeral = 0;
-
-      cultosDoMes.forEach(chave => {
-        const reg = registros[chave];
-        let presencas = reg.presencas || {};
-        let countM = Object.values(presencas).filter(v => v === 'presente').length;
-        let countV = reg.visitantesLista ? reg.visitantesLista.length : (reg.visitantesData?.qtd || 0);
-        somaGeral += (countM + countV);
-      });
-
-      let media = totalCultos > 0 ? (somaGeral / totalCultos).toFixed(1) : 0;
-
-      let msg = `*📊 RELATÓRIO MENSAL — ICM PINHOS*\n`;
-      msg += `📅 *Período:* ${mesNomeExtenso}\n`;
-      msg += `📋 *Tipo:* ${tipoRelatorio === 'EBD' ? 'Escola Bíblica (EBD)' : 'Cultos Diários (Dom a Qui)'}\n\n`;
-      msg += `🔢 *Total de Cultos Realizados:* ${totalCultos}\n`;
-      msg += `👥 *Acumulado de Frequência:* ${somaGeral} pessoas\n`;
-      msg += `📈 *Média por Culto:* ${media} pessoas\n`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
+
+    // ====== SALVAR FREQUÊNCIA ======
+    function salvarFrequencia() {
+      try {
+        const data = document.getElementById('cultDate').value;
+        const tipo = document.getElementById('cultType').value;
+        
+        if (!data) {
+          alert('⚠️ Selecione uma data!');
+          return;
+        }
+
+        const checkboxes = document.querySelectorAll('#membersList input[type="checkbox"]:checked');
+        const presentes = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        if (presentes.length === 0) {
+          alert('⚠️ Selecione pelo menos um membro presente!');
+          return;
+        }
+
+        const frequencias = secureStorage.get('frequencias') || [];
+        frequencias.push({
+          data: data,
+          tipo: tipo,
+          presentes: presentes,
+          visitantes: document.getElementById('visitantes').value,
+          dataCriacao: new Date().toISOString()
+        });
+
+        secureStorage.set('frequencias', frequencias);
+        
+        document.getElementById('cultDate').value = '';
+        document.getElementById('visitantes').value = '';
+        document.querySelectorAll('#membersList input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        carregarDados();
+        alert('✅ Frequência registrada com sucesso!');
+        SecureLogger.log(`Frequência registrada para ${data}`, 'info');
+      } catch (error) {
+        SecureLogger.error('Erro ao salvar frequência', error.message);
+      }
+    }
+
+    // ====== RENDERIZAR MEMBROS ======
+    function renderizarMembros(membros) {
+      const lista1 = document.getElementById('membersList');
+      const lista2 = document.getElementById('membersList2');
+      
+      lista1.innerHTML = '';
+      lista2.innerHTML = '';
+
+      membros.forEach(membro => {
+        // Lista de seleção (ABA 1)
+        const item1 = document.createElement('div');
+        item1.className = 'member-select-item';
+        item1.innerHTML = `
+          <label class="member-info">
+            <input type="checkbox" value="${membro.id}" style="margin-right: 10px;">
+            <span class="member-manage-name">${membro.nome}</span>
+            <span class="member-tag">${membro.grupo}</span>
+          </label>
+        `;
+        lista1.appendChild(item1);
+
+        // Lista de gerenciamento (ABA 2)
+        const item2 = document.createElement('div');
+        item2.className = 'member-manage-item';
+        item2.innerHTML = `
+          <div class="member-manage-info">
+            <div class="member-manage-name">${membro.nome}</div>
+            <div class="member-manage-group">${membro.grupo}</div>
+          </div>
+          <div class="member-manage-actions">
+            <button class="member-action-btn edit" onclick="editarMembro(${membro.id})">✏️</button>
+            <button class="member-action-btn delete" onclick="deletarMembro(${membro.id})">🗑️</button>
+          </div>
+        `;
+        lista2.appendChild(item2);
+      });
+    }
+
+    // ====== DELETAR MEMBRO ======
+    function deletarMembro(id) {
+      if (confirm('⚠️ Tem certeza que deseja deletar este membro?')) {
+        let membros = secureStorage.get('membros') || [];
+        membros = membros.filter(m => m.id !== id);
+        secureStorage.set('membros', membros);
+        carregarDados();
+        alert('✅ Membro deletado!');
+      }
+    }
+
+    // ====== ATUALIZAR ESTATÍSTICAS ======
+    function atualizarEstatisticas(membros, frequencias) {
+      const contagem = {};
+      
+      frequencias.forEach(freq => {
+        freq.presentes.forEach(id => {
+          contagem[id] = (contagem[id] || 0) + 1;
+        });
+      });
+
+      const ranking = membros
+        .map(m => ({ ...m, presenças: contagem[m.id] || 0 }))
+        .sort((a, b) => b.presenças - a.presenças)
+        .slice(0, 3);
+
+      for (let i = 0; i < 3; i++) {
+        const top = ranking[i];
+        document.getElementById(`top${i+1}Name`).textContent = top ? top.nome : '-';
+        document.getElementById(`top${i+1}Count`).textContent = top ? `${top.presenças} presenças` : '0 presenças';
+      }
+
+      const total = membros.reduce((acc, m) => acc + (contagem[m.id] || 0), 0);
+      document.getElementById('floatingCounter').textContent = `👥 Total: ${total}`;
+    }
+
+    // ====== EXPORTAR PDF ======
+    function exportarPDF() {
+      if (!ExportacaoSegura.pedirConfirmacao('pdf')) return;
+
+      try {
+        const element = document.querySelector('.container');
+        const opt = {
+          margin: 10,
+          filename: 'frequencia_' + new Date().toISOString().split('T')[0] + '.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+        SecureLogger.log('PDF exportado com sucesso', 'info');
+      } catch (error) {
+        SecureLogger.error('Erro ao exportar PDF', error.message);
+      }
+    }
+
+    // ====== EXPORTAR CSV ======
+    function exportarCSV() {
+      if (!ExportacaoSegura.pedirConfirmacao('csv')) return;
+
+      try {
+        const membros = secureStorage.get('membros') || [];
+        const frequencias = secureStorage.get('frequencias') || [];
+        
+        let csv = 'Data,Tipo,Presentes\n';
+        
+        frequencias.forEach(freq => {
+          const nomes = freq.presentes
+            .map(id => {
+              const m = membros.find(mb => mb.id === id);
+              return m ? m.nome : 'Desconhecido';
+            })
+            .join(';');
+          
+          csv += `"${freq.data}","${freq.tipo}","${nomes}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'frequencia_' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+        
+        SecureLogger.log('CSV exportado com sucesso', 'info');
+      } catch (error) {
+        SecureLogger.error('Erro ao exportar CSV', error.message);
+      }
+    }
+
+    // ====== EXPORTAR IMAGEM ======
+    function exportarImagem() {
+      if (!ExportacaoSegura.pedirConfirmacao('imagem')) return;
+
+      try {
+        const element = document.querySelector('.container');
+        html2canvas(element).then(canvas => {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL();
+          link.download = 'frequencia_' + new Date().toISOString().split('T')[0] + '.png';
+          link.click();
+          SecureLogger.log('Imagem exportada com sucesso', 'info');
+        });
+      } catch (error) {
+        SecureLogger.error('Erro ao exportar imagem', error.message);
+      }
+    }
+
+    // ====== EXPORTAR WHATSAPP ======
+    function exportarWhatsApp() {
+      if (!ExportacaoSegura.pedirConfirmacao('whatsapp')) return;
+
+      try {
+        const membros = secureStorage.get('membros') || [];
+        const frequencias = secureStorage.get('frequencias') || [];
+        
+        const ultima = frequencias[frequencias.length - 1];
+        if (!ultima) {
+          alert('⚠️ Nenhuma frequência registrada!');
+          return;
+        }
+
+        const nomes = ultima.presentes
+          .map(id => {
+            const m = membros.find(mb => mb.id === id);
+            return m ? m.nome : 'Desconhecido';
+          })
+          .join('\n• ');
+
+        const mensagem = `📋 *Frequência - ${ultima.data}*\n\n*Tipo:* ${ultima.tipo}\n\n*Presentes:*\n• ${nomes}\n\n_Gerado por ICM PINHOS_`;
+        const encoded = encodeURIComponent(mensagem);
+        
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+        SecureLogger.log('WhatsApp aberto para compartilhamento', 'info');
+      } catch (error) {
+        SecureLogger.error('Erro ao exportar WhatsApp', error.message);
+      }
+    }
+
+    // ====== LIMPAR TUDO ======
+    function limparTodos() {
+      if (confirm('⚠️ ATENÇÃO: Isso deletará TODOS os dados!\n\nTem certeza?')) {
+        if (confirm('⛔ Última confirmação: Dados não podem ser recuperados!')) {
+          secureStorage.clear();
+          carregarDados();
+          alert('✅ Todos os dados foram removidos!');
+          SecureLogger.log('Todos os dados foram removidos pelo usuário', 'warn');
+        }
+      }
+    }
+
+    // ====== ATUALIZAR UI ======
+    function atualizarUI() {
+      carregarDados();
+    }
+
+    // ====== MONITORAR ERROS GLOBAIS ======
+    window.addEventListener('error', (event) => {
+      SecureLogger.error('Erro global detectado', event.message);
+    });
   </script>
 
 </body>
