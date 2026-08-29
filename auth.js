@@ -16,8 +16,7 @@ class AuthManager {
   }
 
   /**
-   * Hash simples para senha (NÃO é segurança forte, apenas proteção básica)
-   * Em produção, use autenticação com servidor!
+   * Hash simples para senha (proteção básica para client-side)
    */
   hashPassword(password) {
     let hash = 0;
@@ -30,12 +29,11 @@ class AuthManager {
   }
 
   /**
-   * Define a senha do aplicativo
-   * CONFIGURE UMA SENHA FORTE AQUI
+   * Retorna o HASH esperado em vez da senha em texto puro
+   * (Hash gerado via hashPassword para "ICM2026Pinhos")
    */
-  getDefaultPassword() {
-    // ALTERE ESTA SENHA PARA ALGO ÚNICO
-    return 'ICM2026Pinhos'; // MUDE ESTA SENHA!
+  getExpectedPasswordHash() {
+    return '194b15ff';
   }
 
   /**
@@ -63,14 +61,14 @@ class AuthManager {
   }
 
   /**
-   * Realiza login com validação de senha
+   * Realiza login com validação do hash
    */
   login(password) {
     try {
-      const correctPasswordHash = this.hashPassword(this.getDefaultPassword());
+      const expectedHash = this.getExpectedPasswordHash();
       const inputPasswordHash = this.hashPassword(password);
 
-      if (inputPasswordHash !== correctPasswordHash) {
+      if (inputPasswordHash !== expectedHash) {
         return {
           success: false,
           message: '❌ Senha incorreta!'
@@ -91,14 +89,18 @@ class AuthManager {
       );
 
       this.isAuthenticated = true;
-      SecureLogger.log('Autenticação realizada com sucesso', 'info');
+      if (typeof SecureLogger !== 'undefined') {
+        SecureLogger.log('Autenticação realizada com sucesso', 'info');
+      }
 
       return {
         success: true,
         message: '✅ Bem-vindo ao app de frequência!'
       };
     } catch (error) {
-      SecureLogger.error('Erro no login', error.message);
+      if (typeof SecureLogger !== 'undefined') {
+        SecureLogger.error('Erro no login', error.message);
+      }
       return {
         success: false,
         message: '❌ Erro ao fazer login. Tente novamente.'
@@ -121,7 +123,9 @@ class AuthManager {
     try {
       localStorage.removeItem(this.sessionKey);
       this.isAuthenticated = false;
-      SecureLogger.log('Logout realizado', 'info');
+      if (typeof SecureLogger !== 'undefined') {
+        SecureLogger.log('Logout realizado', 'info');
+      }
       window.location.reload();
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
@@ -294,6 +298,8 @@ class AuthManager {
         const modal = document.getElementById('auth-modal');
         if (modal) modal.remove();
         this.isAuthenticated = true;
+        // Recarrega a página para inicializar os elementos da interface
+        window.location.reload();
       }, 500);
     } else {
       messageDiv.style.display = 'block';
@@ -355,7 +361,9 @@ class AuthManager {
       
       inactivityTimeout = setTimeout(() => {
         if (this.isAuthenticated) {
-          SecureLogger.warn('Sessão expirada por inatividade');
+          if (typeof SecureLogger !== 'undefined') {
+            SecureLogger.warn('Sessão expirada por inatividade');
+          }
           this.logout();
         }
       }, this.sessionDuration);
