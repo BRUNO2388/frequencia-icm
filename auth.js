@@ -193,6 +193,10 @@ class AuthManager {
           type="password"
           id="auth-password-input"
           placeholder="Senha de acesso"
+          autocorrect="off"
+          autocapitalize="none"
+          spellcheck="false"
+          autocomplete="off"
           style="
             width: 100%;
             padding: 12px;
@@ -266,7 +270,8 @@ class AuthManager {
    */
   handleLogin() {
     const passwordInput = document.getElementById('auth-password-input');
-    const password = passwordInput.value.trim();
+    // Remove qualquer espaço inserido automaticamente pelo teclado virtual
+    const password = passwordInput.value.replace(/\s+/g, '');
     const messageDiv = document.getElementById('auth-message');
 
     if (!password) {
