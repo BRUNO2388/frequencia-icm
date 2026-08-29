@@ -29,11 +29,10 @@ class AuthManager {
   }
 
   /**
-   * Retorna o HASH esperado em vez da senha em texto puro
-   * (Hash gerado via hashPassword para "ICM2026Pinhos")
+   * Retorna o HASH esperado referente à senha "Icm.123"
    */
   getExpectedPasswordHash() {
-    return '194b15ff';
+    return 'b1ecfe18';
   }
 
   /**
