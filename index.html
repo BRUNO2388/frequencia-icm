@@ -5,27 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Frequência de Cultos - ICM PINHOS</title>
 
-  <!-- ========================================================
-       HEADERS DE SEGURANÇA
-       ======================================================== -->
-  
-  <!-- Content Security Policy - Protege contra XSS -->
-  <meta http-equiv="Content-Security-Policy" 
-        content="default-src 'self'; 
-                 script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-                 font-src 'self' https://fonts.gstatic.com;
-                 img-src 'self' data: https:;
-                 connect-src 'self';
-                 frame-ancestors 'none';
-                 base-uri 'self';
-                 form-action 'self';">
-
-  <!-- Força HTTPS e Segurança de Transporte -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta http-equiv="Strict-Transport-Security" 
-        content="max-age=31536000; includeSubDomains; preload">
-
   <!-- CONFIGURAÇÕES DE PWA / TELA CHEIA -->
   <meta name="theme-color" content="#2d6a4f">
   <meta name="mobile-web-app-capable" content="yes">
@@ -34,32 +13,13 @@
   <meta name="apple-mobile-web-app-title" content="ICM PINHOS">
   <meta name="application-name" content="ICM PINHOS">
 
-  <!-- ÍCONE DO APP EM SVG -->
-  <link rel="manifest" href="manifest.json">
+  <!-- ÍCONE DO APP EM SVG (PREVINE ÍCONE "G" DO GITHUB) -->
+ <link rel="manifest" href="manifest.json">
   
-  <!-- ========================================================
-       BIBLIOTECAS COM SUBRESOURCE INTEGRITY (SRI)
-       ======================================================== -->
-  
-  <!-- html2canvas 1.4.1 COM SRI -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
-          integrity="sha384-JPjiLtbThobVAG4BEBMJRx6imDciPlHiwK6wOZfL2ohS+ePyF4lZHHiS4N9rBQNO"
-          crossorigin="anonymous"></script>
-
-  <!-- jsPDF 2.5.1 COM SRI -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
-          integrity="sha384-xySTvJjQDL9raIsnZhAqYeXnq2suYRxlYMPH1Ytxl3B/eJ1ralXTbTFy/E06IcSL"
-          crossorigin="anonymous"></script>
-
-  <!-- Chart.js 4.4.0 COM SRI -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-          integrity="sha384-exbDsTDy1dCEc9H2OBfIVpAGd2ewkCeu+EKPuf92YuDRiuR6OCBp30TP+HDYHz8m"
-          crossorigin="anonymous"></script>
-
-  <!-- ========================================================
-       BIBLIOTECA DE SEGURANÇA (DEVE SER CARREGADA PRIMEIRO)
-       ======================================================== -->
-  <script src="security-fix.js" defer></script>
+  <!-- BIBLIOTECAS DE CAPTURA E PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Playfair+Display:ital,wght@1,600;1,800&display=swap');
@@ -1306,19 +1266,10 @@
     👥 Total: 0
   </div>
 
-  <!-- ========================================================
-       SCRIPTS COM SECURITY FIX LIBRARY
-       ======================================================== -->
-
   <script>
-    /**
-     * APLICAÇÃO FREQUÊNCIA ICM PINHOS
-     * Com proteção de segurança integrada
-     */
 
     // ====== INICIALIZAÇÃO ======
     document.addEventListener('DOMContentLoaded', () => {
-      StatusConexao.atualizarIndicador('.net-status-bar');
       carregarDados();
       atualizarUI();
     });
@@ -1327,12 +1278,12 @@
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
       const isDark = document.body.classList.contains('dark-mode');
-      secureStorage.set('dark_mode', isDark);
+      localStorage.setItem('dark_mode', isDark);
       document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
     });
 
     // Carregar tema salvo
-    if (secureStorage.get('dark_mode')) {
+    if (localStorage.getItem('dark_mode') === 'true') {
       document.body.classList.add('dark-mode');
       document.getElementById('themeToggle').textContent = '☀️';
     }
@@ -1344,58 +1295,53 @@
       
       document.getElementById(`tab-${index}`).classList.add('active');
       document.querySelectorAll('.tab-btn')[index].classList.add('active');
-      
-      SecureLogger.log(`Aberta aba ${index}`, 'info');
     }
 
     // ====== CARREGAR DADOS ======
     function carregarDados() {
       try {
-        const membros = secureStorage.get('membros') || [];
-        const frequencias = secureStorage.get('frequencias') || [];
+        const membros = JSON.parse(localStorage.getItem('membros')) || [];
+        const frequencias = JSON.parse(localStorage.getItem('frequencias')) || [];
         
         renderizarMembros(membros);
         atualizarEstatisticas(membros, frequencias);
-        
-        SecureLogger.log('Dados carregados com sucesso', 'info');
       } catch (error) {
-        SecureLogger.error('Erro ao carregar dados', error.message);
+        console.error('Erro ao carregar dados:', error);
       }
     }
 
     // ====== ADICIONAR MEMBRO ======
     function adicionarMembro() {
       try {
-        const nome = document.getElementById('newMemberName').value;
+        const nome = document.getElementById('newMemberName').value.trim();
         const grupo = document.getElementById('newMemberGroup').value;
 
-        // Validar nome
-        const nomeValidado = Validadores.validarNomeMembro(nome);
+        if (nome.length < 2) {
+          alert('⚠️ Nome deve ter pelo menos 2 caracteres!');
+          return;
+        }
 
-        const membros = secureStorage.get('membros') || [];
+        const membros = JSON.parse(localStorage.getItem('membros')) || [];
         
-        // Verificar duplicata
-        if (membros.some(m => m.nome.toLowerCase() === nomeValidado.toLowerCase())) {
+        if (membros.some(m => m.nome.toLowerCase() === nome.toLowerCase())) {
           alert('⚠️ Este membro já existe!');
           return;
         }
 
         membros.push({
           id: Date.now(),
-          nome: nomeValidado,
+          nome: nome,
           grupo: grupo,
           dataCriacao: new Date().toISOString()
         });
 
-        secureStorage.set('membros', membros);
+        localStorage.setItem('membros', JSON.stringify(membros));
         document.getElementById('newMemberName').value = '';
         
         carregarDados();
         alert('✅ Membro adicionado com sucesso!');
-        SecureLogger.log(`Membro adicionado: ${nomeValidado}`, 'info');
       } catch (error) {
         alert(`❌ Erro: ${error.message}`);
-        SecureLogger.error('Erro ao adicionar membro', error.message);
       }
     }
 
@@ -1418,7 +1364,7 @@
           return;
         }
 
-        const frequencias = secureStorage.get('frequencias') || [];
+        const frequencias = JSON.parse(localStorage.getItem('frequencias')) || [];
         frequencias.push({
           data: data,
           tipo: tipo,
@@ -1427,7 +1373,7 @@
           dataCriacao: new Date().toISOString()
         });
 
-        secureStorage.set('frequencias', frequencias);
+        localStorage.setItem('frequencias', JSON.stringify(frequencias));
         
         document.getElementById('cultDate').value = '';
         document.getElementById('visitantes').value = '';
@@ -1435,9 +1381,8 @@
 
         carregarDados();
         alert('✅ Frequência registrada com sucesso!');
-        SecureLogger.log(`Frequência registrada para ${data}`, 'info');
       } catch (error) {
-        SecureLogger.error('Erro ao salvar frequência', error.message);
+        console.error('Erro:', error);
       }
     }
 
@@ -1482,9 +1427,9 @@
     // ====== DELETAR MEMBRO ======
     function deletarMembro(id) {
       if (confirm('⚠️ Tem certeza que deseja deletar este membro?')) {
-        let membros = secureStorage.get('membros') || [];
+        let membros = JSON.parse(localStorage.getItem('membros')) || [];
         membros = membros.filter(m => m.id !== id);
-        secureStorage.set('membros', membros);
+        localStorage.setItem('membros', JSON.stringify(membros));
         carregarDados();
         alert('✅ Membro deletado!');
       }
@@ -1517,7 +1462,9 @@
 
     // ====== EXPORTAR PDF ======
     function exportarPDF() {
-      if (!ExportacaoSegura.pedirConfirmacao('pdf')) return;
+      if (!confirm('📄 Deseja exportar em PDF?\n\nCertifique-se de compartilhar apenas com pessoas autorizadas!')) {
+        return;
+      }
 
       try {
         const element = document.querySelector('.container');
@@ -1530,19 +1477,20 @@
         };
         
         html2pdf().set(opt).from(element).save();
-        SecureLogger.log('PDF exportado com sucesso', 'info');
       } catch (error) {
-        SecureLogger.error('Erro ao exportar PDF', error.message);
+        alert('❌ Erro ao exportar PDF: ' + error.message);
       }
     }
 
     // ====== EXPORTAR CSV ======
     function exportarCSV() {
-      if (!ExportacaoSegura.pedirConfirmacao('csv')) return;
+      if (!confirm('📊 Deseja exportar em CSV?\n\nCertifique-se de compartilhar apenas com pessoas autorizadas!')) {
+        return;
+      }
 
       try {
-        const membros = secureStorage.get('membros') || [];
-        const frequencias = secureStorage.get('frequencias') || [];
+        const membros = JSON.parse(localStorage.getItem('membros')) || [];
+        const frequencias = JSON.parse(localStorage.getItem('frequencias')) || [];
         
         let csv = 'Data,Tipo,Presentes\n';
         
@@ -1563,16 +1511,16 @@
         link.href = url;
         link.download = 'frequencia_' + new Date().toISOString().split('T')[0] + '.csv';
         link.click();
-        
-        SecureLogger.log('CSV exportado com sucesso', 'info');
       } catch (error) {
-        SecureLogger.error('Erro ao exportar CSV', error.message);
+        alert('❌ Erro ao exportar CSV: ' + error.message);
       }
     }
 
     // ====== EXPORTAR IMAGEM ======
     function exportarImagem() {
-      if (!ExportacaoSegura.pedirConfirmacao('imagem')) return;
+      if (!confirm('🖼️ Deseja capturar uma imagem?\n\nCertifique-se de compartilhar apenas com pessoas autorizadas!')) {
+        return;
+      }
 
       try {
         const element = document.querySelector('.container');
@@ -1581,20 +1529,21 @@
           link.href = canvas.toDataURL();
           link.download = 'frequencia_' + new Date().toISOString().split('T')[0] + '.png';
           link.click();
-          SecureLogger.log('Imagem exportada com sucesso', 'info');
         });
       } catch (error) {
-        SecureLogger.error('Erro ao exportar imagem', error.message);
+        alert('❌ Erro ao exportar imagem: ' + error.message);
       }
     }
 
     // ====== EXPORTAR WHATSAPP ======
     function exportarWhatsApp() {
-      if (!ExportacaoSegura.pedirConfirmacao('whatsapp')) return;
+      if (!confirm('💬 Deseja compartilhar no WhatsApp?\n\nCompartilhe apenas com pessoas autorizadas!')) {
+        return;
+      }
 
       try {
-        const membros = secureStorage.get('membros') || [];
-        const frequencias = secureStorage.get('frequencias') || [];
+        const membros = JSON.parse(localStorage.getItem('membros')) || [];
+        const frequencias = JSON.parse(localStorage.getItem('frequencias')) || [];
         
         const ultima = frequencias[frequencias.length - 1];
         if (!ultima) {
@@ -1613,9 +1562,8 @@
         const encoded = encodeURIComponent(mensagem);
         
         window.open(`https://wa.me/?text=${encoded}`, '_blank');
-        SecureLogger.log('WhatsApp aberto para compartilhamento', 'info');
       } catch (error) {
-        SecureLogger.error('Erro ao exportar WhatsApp', error.message);
+        alert('❌ Erro ao exportar WhatsApp: ' + error.message);
       }
     }
 
@@ -1623,10 +1571,9 @@
     function limparTodos() {
       if (confirm('⚠️ ATENÇÃO: Isso deletará TODOS os dados!\n\nTem certeza?')) {
         if (confirm('⛔ Última confirmação: Dados não podem ser recuperados!')) {
-          secureStorage.clear();
+          localStorage.clear();
           carregarDados();
           alert('✅ Todos os dados foram removidos!');
-          SecureLogger.log('Todos os dados foram removidos pelo usuário', 'warn');
         }
       }
     }
@@ -1636,10 +1583,6 @@
       carregarDados();
     }
 
-    // ====== MONITORAR ERROS GLOBAIS ======
-    window.addEventListener('error', (event) => {
-      SecureLogger.error('Erro global detectado', event.message);
-    });
   </script>
 
 </body>
