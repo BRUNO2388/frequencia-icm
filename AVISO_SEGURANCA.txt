@@ -1,0 +1,99 @@
+⚠️ AVISOS DE SEGURANÇA - FREQUÊNCIA ICM PINHOS
+
+================================================================================
+1. ARMAZENAMENTO DE DADOS NO LOCALSTORAGE
+================================================================================
+
+O app armazena dados no localStorage do navegador, que é acessível via DevTools
+(F12 > Application/Storage > Local Storage).
+
+RISCOS:
+  • Qualquer pessoa com acesso ao dispositivo pode visualizar os dados
+  • Dados não são criptografados no navegador
+  • Informações de frequência e membros ficarão visíveis
+
+RECOMENDAÇÕES:
+  ✓ Use este app apenas em dispositivos pessoais ou de confiança
+  ✓ Não deixe o dispositivo desbloqueado sem supervisão
+  ✓ Considere limpar dados regularmente (botão "Limpar Dados" no app)
+  ✓ Para ambientes compartilhados, implemente autenticação (veja aviso 2)
+
+================================================================================
+2. FALTA DE AUTENTICAÇÃO
+================================================================================
+
+Atualmente, o app NÃO possui sistema de login ou autenticação.
+
+RISCOS:
+  • Qualquer pessoa com acesso à URL pode usar o app
+  • Não há controle de quem está acessando os dados
+  • Dados sensíveis podem ser modificados por pessoas não autorizadas
+
+RECOMENDAÇÕES:
+  ✓ Proteja o acesso físico ao dispositivo
+  ✓ Use em ambientes de confiança apenas
+  ✓ Se precisar de segurança adicional, considere adicionar:
+    - Senha de acesso local
+    - Autenticação com serviço (Google, GitHub, etc.)
+    - Controle de usuários e permissões
+
+IMPLEMENTAÇÃO FUTURA:
+  Para adicionar login, será necessário:
+  - Criar sistema de autenticação (pode ser um servidor simples)
+  - Implementar hash de senhas (NUNCA armazenar em texto plano)
+  - Usar sessões/tokens seguros
+  - Validar permissões no lado do servidor
+
+================================================================================
+3. NECESSIDADE DE HTTPS EM PRODUÇÃO
+================================================================================
+
+Se este app for publicado online, HTTPS é essencial.
+
+RISCOS DE HTTP:
+  • Dados podem ser interceptados durante transmissão
+  • Qualquer pessoa na mesma rede WiFi pode capturar informações
+  • Credenciais e tokens podem ser roubados
+  • Não há privacidade nas comunicações
+
+RECOMENDAÇÕES:
+  ✓ Sempre use HTTPS em produção
+  ✓ Use serviços como GitHub Pages (HTTPS automático)
+  ✓ Se usar seu próprio servidor:
+    - Obtenha certificado SSL (Let's Encrypt é gratuito)
+    - Configure redirect HTTP → HTTPS
+    - Use HSTS headers
+
+VERIFICAÇÃO:
+  Acesse a app no navegador:
+  ✓ Se URL começa com "https://" está seguro
+  ✗ Se URL começa com "http://" é inseguro
+
+================================================================================
+4. CHECKLIST DE SEGURANÇA
+================================================================================
+
+Antes de usar em produção:
+
+  [ ] Entendo que dados são armazenados localmente em texto plano
+  [ ] Acesso do app está restrito a pessoas de confiança
+  [ ] Dispositivo é protegido por senha/biometria
+  [ ] Não compartilho URL publicamente (sem autenticação)
+  [ ] Se online, garanto que site usa HTTPS
+  [ ] Faço backup regular dos dados
+  [ ] Limpo dados antigos periodicamente
+  [ ] Testei em navegadores principais
+
+================================================================================
+5. CONTATO E SUPORTE
+================================================================================
+
+Para questões sobre segurança:
+  • Consulte o arquivo SEGURANCA.md para mais detalhes técnicos
+  • Revise o código em security-fix.js para proteções implementadas
+  • Considere adicionar novas camadas de proteção conforme necessário
+
+================================================================================
+
+Última atualização: 29/08/2026
+Status: ⚠️ LEIA ANTES DE USAR EM PRODUÇÃO
