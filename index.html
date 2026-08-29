@@ -60,51 +60,51 @@
     .net-status-bar.online { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     .net-status-bar.offline { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 
-    /* CABEÇALHO COM A NOVA LOGO DA IGREJA */
-.logo-box {
-  background: linear-gradient(135deg, #0b2545 0%, #134074 100%);
-  border-radius: 12px;
-  padding: 20px 15px;
-  text-align: center;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  color: #ffffff;
-}
+    /* CABEÇALHO COM A NOVA LOGO DA IGREJA (AJUSTADO PARA AZUL MAIS CLARO E TEXTO ESCURO COM ALTA LEITURA) */
+    .logo-box {
+      background: linear-gradient(135deg, #4a7bb0 0%, #2b5278 100%);
+      border-radius: 12px;
+      padding: 20px 15px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      color: #ffffff;
+    }
 
-.logo-img-container {
-  max-width: 260px;
-  margin: 0 auto 10px auto;
-}
+    .logo-img-container {
+      max-width: 260px;
+      margin: 0 auto 10px auto;
+    }
 
-.logo-img-container img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  display: block;
-}
+    .logo-img-container img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+    }
 
-.subtitulo-pinhos {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: 3px;
-  color: #ffffff;
-  margin-top: 5px;
-  text-transform: uppercase;
-}
+    .subtitulo-pinhos {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #ffffff;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
 
-.tag-frequencia {
-  display: inline-block;
-  background-color: #ffffff;
-  color: #134074;
-  font-size: 0.85rem;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 20px;
-  margin-top: 8px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
+    .tag-frequencia {
+      display: inline-block;
+      background-color: #ffffff;
+      color: #1c3d5a;
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-top: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
 
     .nav-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #2d6a4f; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .tab-btn { flex: 1; padding: 10px 6px; border: none; background: var(--card-bg); cursor: pointer; font-weight: bold; font-size: 0.8rem; border-radius: 6px 6px 0 0; color: var(--text-main); white-space: nowrap; }
@@ -113,8 +113,9 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    h2 { font-size: 1rem; color: #2d6a4f; border-bottom: 2px solid #2d6a4f; padding-bottom: 5px; margin: 15px 0; text-align: center; }
-    label { font-size: 0.85rem; font-weight: bold; color: #2d6a4f; display: block; margin: 8px 0 4px; }
+    /* RÓTULOS E TÍTULOS COM COR ESCURA PARA MÁXIMA LEITURA */
+    h2 { font-size: 1rem; color: #1c3d5a; border-bottom: 2px solid #1c3d5a; padding-bottom: 5px; margin: 15px 0; text-align: center; font-weight: 800; }
+    label { font-size: 0.85rem; font-weight: 800; color: #1c3d5a; display: block; margin: 8px 0 4px; }
     input, select { width: 100%; padding: 10px; border: 1px solid var(--border-color); background: var(--bg-container); color: var(--text-main); border-radius: 8px; font-size: 0.95rem; outline: none; }
     
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -228,11 +229,12 @@
     </button>
 
     <!-- CABEÇALHO COM LOGO -->
-<div class="logo-box">
-  <div class="logo-img-container">
-    <img src="logo.jpg" alt="Igreja Cristã Maranata">
-  <div><span class="tag-frequencia">Frequência</span></div>
-</div>
+    <div class="logo-box">
+      <div class="logo-img-container">
+        <img src="logo.jpg" alt="Igreja Cristã Maranata">
+      </div>
+      <div><span class="tag-frequencia">Frequência</span></div>
+    </div>
 
     <!-- ABAS -->
     <div class="nav-tabs no-print">
@@ -745,7 +747,7 @@
       CATEGORIAS.forEach(cat => {
         const membrosCat = chaves.filter(k => window.membrosCadastrados[k].categoria === cat);
         if (membrosCat.length > 0) {
-          html += `<h4 style="margin-top:14px; margin-bottom:4px; color:#2d6a4f; border-bottom:1px solid #c8e6c9; padding-bottom:2px;">${cat} (${membrosCat.length})</h4>`;
+          html += `<h4 style="margin-top:14px; margin-bottom:4px; color:#1c3d5a; border-bottom:1px solid #c8e6c9; padding-bottom:2px; font-weight:bold;">${cat} (${membrosCat.length})</h4>`;
           membrosCat.forEach(k => {
             const m = window.membrosCadastrados[k];
             const grupoStr = m.grupo || 'Grupo 1';
@@ -883,7 +885,7 @@
           html += `
             <div class="search-result-item" onclick="adicionarPresencaRapida('${id}')">
               <span><strong>${m.nome}</strong> (${m.categoria} • ${grupoStr})</span>
-              <span style="font-size:0.8rem; padding:4px 8px; border-radius:12px; font-weight:bold; ${isPresente ? 'background:#d4edda; color:#155724;' : 'background:#2d6a4f; color:#fff;'}">
+              <span style="font-size:0.8rem; padding:4px 8px; border-radius:12px; font-weight:bold; ${isPresente ? 'background:#d4edda; color:#155724;' : 'background:#1c3d5a; color:#fff;'}">
                 ${isPresente ? 'Já Presente' : '+ Marcar Presente'}
               </span>
             </div>
@@ -961,7 +963,7 @@
               tabelaFolhaCat += `<tr class="row-presente"><td style="width:50%;">${m.nome}</td><td style="width:25%;">${cat}</td><td style="width:25%;">${grupoStr}</td></tr>`;
             }
           });
-          if (htmlPresencaCat !== '') divPresenca.innerHTML += `<h4 style="margin-top:12px; color:#2d6a4f; border-bottom:1px solid #ddd;">${cat}</h4>` + htmlPresencaCat;
+          if (htmlPresencaCat !== '') divPresenca.innerHTML += `<h4 style="margin-top:12px; color:#1c3d5a; border-bottom:1px solid #ddd; font-weight:bold;">${cat}</h4>` + htmlPresencaCat;
           if (tabelaFolhaCat !== '') {
             htmlFolha += `
               <div class="table-responsive">
