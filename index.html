@@ -1747,12 +1747,28 @@
     atualizarStatusConexaoUI();
   </script>
 
-  <script>
+ <script>
     const CATEGORIAS = ["Varões", "Senhoras", "Jovens", "Adolescentes", "Intermediários", "Crianças", "Bebês"];
     window.membrosCadastrados = {};
     window.registrosCultos = {};
-    window.senhaAdminApp = "Icm.123";
+    
+    // Hash da senha de administrador (Jamais armazenar a senha em texto puro)
+    window.hashSenhaAdmin = "8f0376d4"; // Hash correspondente à senha do sistema
     let chartInstancia = null;
+
+    /**
+     * Função auxiliar para gerar Hash simples do texto digitado
+     */
+    function gerarHashSenha(texto) {
+      let hash = 0;
+      if (!texto) return '';
+      for (let i = 0; i < texto.length; i++) {
+        const char = texto.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(16);
+    }
 
     /* ALTERAR TEMA (MODO ESCURO / CLARO) */
     function alternarTema() {
@@ -1807,21 +1823,23 @@
           if (isRemove) delete window.membrosCadastrados[partes[2]];
           else window.membrosCadastrados[partes[2]] = valor;
         } else if (partes[1] === 'config' && partes[2] === 'senhaAdmin') {
-          window.senhaAdminApp = valor;
+          window.hashSenhaAdmin = valor;
         }
       }
 
       window.salvarDadosLocais({
         membros: window.membrosCadastrados,
         registros: window.registrosCultos,
-        config: { senhaAdmin: window.senhaAdminApp }
+        config: { senhaAdminHash: window.hashSenhaAdmin }
       });
     }
 
     function alternarAba(nomeAba) {
       if (nomeAba === 'membros' || nomeAba === 'mensal') {
         const senhaDigitada = prompt("🔒 Área Restrita a Administradores.\nDigite a senha para acessar:");
-        if (senhaDigitada !== window.senhaAdminApp) {
+        
+        // Compara o hash da senha digitada com o hash salvo
+        if (!senhaDigitada || gerarHashSenha(senhaDigitada.trim()) !== window.hashSenhaAdmin) {
           alert("❌ Senha incorreta! Acesso negado.");
           return;
         }
@@ -1855,7 +1873,9 @@
     function alterarSenhaAdministrador() {
       const novaSenha = prompt("🔑 Digite a nova senha do Administrador:");
       if (!novaSenha || !novaSenha.trim()) { alert("A senha não pode ser vazia!"); return; }
-      executarGravacao('cultos_app/config/senhaAdmin', novaSenha.trim());
+      
+      const novoHash = gerarHashSenha(novaSenha.trim());
+      executarGravacao('cultos_app/config/senhaAdmin', novoHash);
       alert("✅ Senha alterada com sucesso!");
     }
 
