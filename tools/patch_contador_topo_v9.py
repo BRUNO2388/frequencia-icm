@@ -81,7 +81,8 @@ assert old_float_html in t, 'HTML antigo do contador nao encontrado'
 t = t.replace(old_float_html, '', 1)
 
 assert t.count('id="badge-contador-flutuante"') == 1
-assert 'bottom: 20px;' not in t
+assert old_counter_css not in t
+assert old_mobile not in t
 assert "floatingBadge.style.display = nomeAba === 'chamada' ? 'flex' : 'none'" in t
 
 p.write_text(t, encoding='utf-8')
