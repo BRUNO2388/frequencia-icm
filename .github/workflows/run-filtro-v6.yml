@@ -22,31 +22,18 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           t = p.read_text(encoding='utf-8')
-
-          old_buttons = '''      <div class="filter-chips" id="filtros-chamada">
-        <button class="filter-chip active" data-filter="TODOS" onclick="setFiltroChamada('TODOS', this)">Todos</button>
-        <button class="filter-chip" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
-        <button class="filter-chip" data-filter="AUSENTES" onclick="setFiltroChamada('AUSENTES', this)">❌ Ausentes</button>
-        <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>'''
-          new_buttons = '''      <div class="filter-chips" id="filtros-chamada">
-        <button class="filter-chip active" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
-        <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>'''
-
-          old_default = "    window.filtroChamadaAtual = 'TODOS';"
-          new_default = "    window.filtroChamadaAtual = 'PRESENTES';"
-
-          old_logic = "            const filtro = window.filtroChamadaAtual || 'TODOS';\n            const mostrar = filtro === 'TODOS' || (filtro === 'PRESENTES' && status === 'presente') || (filtro === 'AUSENTES' && status !== 'presente') || filtro === cat;"
-          new_logic = "            const filtro = window.filtroChamadaAtual || 'PRESENTES';\n            const mostrar = (filtro === 'PRESENTES' && status === 'presente') || filtro === cat;"
-
-          for old, new, label in [
-              (old_buttons, new_buttons, 'botoes'),
-              (old_default, new_default, 'padrao'),
-              (old_logic, new_logic, 'logica')
-          ]:
+          replacements = [
+              ('        <button class="filter-chip active" data-filter="TODOS" onclick="setFiltroChamada(\'TODOS\', this)">Todos</button>\n', ''),
+              ('        <button class="filter-chip" data-filter="PRESENTES" onclick="setFiltroChamada(\'PRESENTES\', this)">✅ Presentes</button>', '        <button class="filter-chip active" data-filter="PRESENTES" onclick="setFiltroChamada(\'PRESENTES\', this)">✅ Presentes</button>'),
+              ('        <button class="filter-chip" data-filter="AUSENTES" onclick="setFiltroChamada(\'AUSENTES\', this)">❌ Ausentes</button>\n', ''),
+              ("    window.filtroChamadaAtual = 'TODOS';", "    window.filtroChamadaAtual = 'PRESENTES';"),
+              ("            const filtro = window.filtroChamadaAtual || 'TODOS';", "            const filtro = window.filtroChamadaAtual || 'PRESENTES';"),
+              ("            const mostrar = filtro === 'TODOS' || (filtro === 'PRESENTES' && status === 'presente') || (filtro === 'AUSENTES' && status !== 'presente') || filtro === cat;", "            const mostrar = (filtro === 'PRESENTES' && status === 'presente') || filtro === cat;")
+          ]
+          for old, new in replacements:
               if old not in t:
-                  raise SystemExit(f'Trecho esperado nao encontrado: {label}')
+                  raise SystemExit('Trecho esperado nao encontrado: ' + old[:80])
               t = t.replace(old, new, 1)
-
           p.write_text(t, encoding='utf-8')
           PY
       - name: Validar ajuste
@@ -55,8 +42,8 @@ jobs:
           test "$(git diff --name-only | tr '\n' ' ')" = "index.html "
           grep -q "window.filtroChamadaAtual = 'PRESENTES';" index.html
           grep -q 'filter-chip active.*PRESENTES' index.html
-          ! grep -q 'data-filter="TODOS"' index.html
-          ! grep -q 'data-filter="AUSENTES"' index.html
+          if grep -q 'data-filter="TODOS"' index.html; then exit 1; fi
+          if grep -q 'data-filter="AUSENTES"' index.html; then exit 1; fi
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
