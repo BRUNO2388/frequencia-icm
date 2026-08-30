@@ -21,23 +21,14 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           p = Path('index.html')
           t = p.read_text(encoding='utf-8')
-
-          old = '''        <button class="filter-chip" data-filter="Adolescentes" onclick="setFiltroChamada('Adolescentes', this)">Adolescentes</button>
-        <button class="filter-chip" data-filter="Crianças" onclick="setFiltroChamada('Crianças', this)">Crianças</button>'''
-
-          new = '''        <button class="filter-chip" data-filter="Adolescentes" onclick="setFiltroChamada('Adolescentes', this)">Adolescentes</button>
-        <button class="filter-chip" data-filter="Intermediários" onclick="setFiltroChamada('Intermediários', this)">Intermediários</button>
-        <button class="filter-chip" data-filter="Crianças" onclick="setFiltroChamada('Crianças', this)">Crianças</button>
-        <button class="filter-chip" data-filter="Bebês" onclick="setFiltroChamada('Bebês', this)">Bebês</button>'''
-
+          old = "        <button class=\"filter-chip\" data-filter=\"Adolescentes\" onclick=\"setFiltroChamada('Adolescentes', this)\">Adolescentes</button>\n        <button class=\"filter-chip\" data-filter=\"Crianças\" onclick=\"setFiltroChamada('Crianças', this)\">Crianças</button>"
+          new = "        <button class=\"filter-chip\" data-filter=\"Adolescentes\" onclick=\"setFiltroChamada('Adolescentes', this)\">Adolescentes</button>\n        <button class=\"filter-chip\" data-filter=\"Intermediários\" onclick=\"setFiltroChamada('Intermediários', this)\">Intermediários</button>\n        <button class=\"filter-chip\" data-filter=\"Crianças\" onclick=\"setFiltroChamada('Crianças', this)\">Crianças</button>\n        <button class=\"filter-chip\" data-filter=\"Bebês\" onclick=\"setFiltroChamada('Bebês', this)\">Bebês</button>"
           if old not in t:
               raise SystemExit('Trecho esperado dos filtros nao encontrado')
           if 'data-filter="Intermediários"' in t or 'data-filter="Bebês"' in t:
               raise SystemExit('Filtros novos ja existem')
-
           t = t.replace(old, new, 1)
           p.write_text(t, encoding='utf-8')
           PY
