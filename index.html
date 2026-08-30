@@ -1056,9 +1056,13 @@
             const chave = chaves[i];
             const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
             if (exigeAdmin && !window.isAdmin) continue;
+            let caminhoEfetivo = item.caminho;
+            if (!window.isAdmin && caminhoEfetivo.startsWith('cultos_app/registros/')) {
+              caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
+            }
             try {
-              if (item.acao === 'SET') await set(ref(db, item.caminho), item.valor);
-              else if (item.acao === 'REMOVE') await remove(ref(db, item.caminho));
+              if (item.acao === 'SET') await set(ref(db, caminhoEfetivo), item.valor);
+              else if (item.acao === 'REMOVE') await remove(ref(db, caminhoEfetivo));
               const txDelete = localDB.transaction("syncQueue", "readwrite");
               txDelete.objectStore("syncQueue").delete(chave);
             } catch (erro) {
