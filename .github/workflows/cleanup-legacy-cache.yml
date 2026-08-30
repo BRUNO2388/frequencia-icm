@@ -1,0 +1,39 @@
+name: Cleanup Legacy Cache
+
+on:
+  push:
+    branches: [security-hardening-v2]
+    paths:
+      - scripts/cleanup_legacy_cache.py
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove legacy cache path
+        run: python scripts/cleanup_legacy_cache.py
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script([^>]*)>(.*?)</script>', html, flags=re.S | re.I)
+          for n, (attrs, body) in enumerate(scripts):
+              if 'src=' in attrs.lower(): continue
+              ext = '.mjs' if 'type="module"' in attrs.lower() else '.js'
+              Path(f'/tmp/cache_{n}{ext}').write_text(body, encoding='utf-8')
+          PY
+          for f in /tmp/cache_*; do node --check "$f"; done
+          grep -q 'delete("cultos_app")' index.html
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Remove cache legado com histórico do navegador"
+          git push
