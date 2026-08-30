@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "registros_louvor": {
+      ".read": false,
+      ".write": false
+    },
+    "membros_louvor": {
+      ".read": false,
+      ".write": false
+    },
+    "cultos_app": {
+      ".read": "auth != null",
+      "membros": {
+        ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'"
+      },
+      "registros": {
+        ".write": "auth != null"
+      },
+      "config": {
+        ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'"
+      },
+      "$other": {
+        ".write": false
+      }
+    }
+  }
+}
