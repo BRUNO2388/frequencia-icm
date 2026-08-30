@@ -19,7 +19,13 @@
       },
       "registros": {
         ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
-        ".write": "auth != null"
+        ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'"
+      },
+      "pendentes": {
+        ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
+        "$cultoId": {
+          ".write": "auth != null && (auth.token.email == 'icmpinhos@gmail.com' || newData.exists())"
+        }
       },
       "config": {
         ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
