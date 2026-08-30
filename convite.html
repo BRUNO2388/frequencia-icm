@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2f6b57">
+  <meta name="robots" content="noindex,nofollow">
+  <meta property="og:title" content="Convite para o culto — ICM Pinhos">
+  <meta property="og:description" content="Acompanhe a contagem regressiva e venha cultuar conosco.">
+  <meta property="og:image" content="https://bruno2388.github.io/frequencia-icm/icm.jpg">
+  <title>Convite para o culto — ICM Pinhos</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px 14px;
+      background: linear-gradient(145deg, #173b35 0%, #2d5268 100%);
+      color: #263238;
+    }
+    .invite-shell { width: 100%; max-width: 540px; }
+    .invite-card {
+      background: rgba(255,255,255,.98);
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.28);
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.55);
+    }
+    .logo-wrap {
+      width: 100%;
+      max-width: 270px;
+      margin: 0 auto 16px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 8px 26px rgba(0,0,0,.16);
+      background: #2f6b57;
+    }
+    .logo-wrap img { width: 100%; display: block; }
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #e7f2ed;
+      color: #245344;
+      font-size: .75rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    h1 { margin: 0; color: #2f6b57; font-size: 1.65rem; line-height: 1.15; }
+    .church { margin: 7px 0 0; color: #607d8b; font-weight: 700; font-size: .95rem; }
+    .event-box {
+      margin: 18px 0 14px;
+      padding: 15px;
+      border-radius: 16px;
+      background: #f4f7f8;
+      border: 1px solid #dbe4e8;
+    }
+    .event-name { display: block; font-size: 1.12rem; font-weight: 900; color: #2d4f62; }
+    .event-date { display: block; margin-top: 5px; font-size: .93rem; color: #607d8b; font-weight: 700; }
+    .countdown-box {
+      margin: 16px 0;
+      padding: 18px 14px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #2f6b57 0%, #2d5268 100%);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(47,107,87,.24);
+    }
+    .countdown-title { font-size: .82rem; font-weight: 800; opacity: .9; text-transform: uppercase; letter-spacing: .04em; }
+    .countdown-text { margin-top: 7px; font-size: 1.28rem; line-height: 1.25; font-weight: 900; }
+    .count-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 14px; }
+    .count-unit { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.18); border-radius: 12px; padding: 9px 4px; }
+    .count-number { display: block; font-size: 1.3rem; font-weight: 900; }
+    .count-label { display: block; font-size: .62rem; text-transform: uppercase; margin-top: 2px; opacity: .9; font-weight: 800; }
+    .message { margin: 16px 2px 4px; color: #37474f; font-size: 1.06rem; line-height: 1.5; font-weight: 700; }
+    .blessing { margin: 10px 0 0; color: #2f6b57; font-weight: 900; }
+    .share-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      margin-top: 18px;
+      padding: 13px 14px;
+      font-size: .95rem;
+      font-weight: 900;
+      cursor: pointer;
+      color: #fff;
+      background: #25a95b;
+    }
+    .invalid { display: none; color: #8b2f35; background: #fff0f1; border: 1px solid #e7b3b7; border-radius: 14px; padding: 16px; font-weight: 800; }
+    .footer { margin-top: 14px; color: rgba(255,255,255,.82); text-align: center; font-size: .76rem; }
+    @media (max-width: 420px) {
+      .invite-card { padding: 20px 14px; border-radius: 20px; }
+      h1 { font-size: 1.45rem; }
+      .countdown-text { font-size: 1.12rem; }
+      .count-number { font-size: 1.12rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="invite-shell">
+    <section class="invite-card" id="invite-card">
+      <div class="logo-wrap"><img src="icm.jpg" alt="ICM Pinhos"></div>
+      <span class="eyebrow">🙏 Convite especial</span>
+      <h1 id="invite-title">Venha cultuar conosco</h1>
+      <p class="church">Igreja Cristã Maranata — ICM Pinhos</p>
+
+      <div id="invite-invalid" class="invalid">Este link de convite não contém uma programação válida.</div>
+
+      <div id="invite-content">
+        <div class="event-box">
+          <span id="event-name" class="event-name"></span>
+          <span id="event-date" class="event-date"></span>
+        </div>
+
+        <div class="countdown-box">
+          <div class="countdown-title">Contagem regressiva</div>
+          <div id="countdown-text" class="countdown-text">Carregando...</div>
+          <div id="count-grid" class="count-grid">
+            <div class="count-unit"><span id="cd-days" class="count-number">0</span><span class="count-label">dias</span></div>
+            <div class="count-unit"><span id="cd-hours" class="count-number">0</span><span class="count-label">horas</span></div>
+            <div class="count-unit"><span id="cd-minutes" class="count-number">0</span><span class="count-label">min</span></div>
+            <div class="count-unit"><span id="cd-seconds" class="count-number">0</span><span class="count-label">seg</span></div>
+          </div>
+        </div>
+
+        <p id="invite-message" class="message"></p>
+        <p class="blessing">Esperamos por você! ❤️</p>
+        <button class="share-btn" type="button" onclick="compartilharConvite()">💬 Compartilhar este convite</button>
+      </div>
+    </section>
+    <div class="footer">ICM Pinhos • Frequência de Cultos</div>
+  </main>
+
+  <script>
+    (() => {
+      const OFFSET = '-03:00';
+      const DURACAO_EVENTO_MS = 2 * 60 * 60 * 1000;
+      const FRASES = {
+        '1': 'Contamos com sua presença!',
+        '2': 'Venha cultuar conosco. Será uma alegria receber você!',
+        '3': 'Esperamos por você. Venha participar conosco!'
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const data = params.get('d') || '';
+      const tipo = (params.get('tipo') || '').toLowerCase();
+      const fraseId = FRASES[params.get('f')] ? params.get('f') : '1';
+
+      function programacao(iso, tipoEvento) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+        const diaSemana = new Date(`${iso}T12:00:00${OFFSET}`).getUTCDay();
+        if (diaSemana >= 1 && diaSemana <= 4 && tipoEvento === 'culto') return { nome: 'Culto da Noite', hora: '19:30' };
+        if (diaSemana === 6 && tipoEvento === 'culto') return { nome: 'Culto da Noite', hora: '19:00' };
+        if (diaSemana === 0 && tipoEvento === 'ebd') return { nome: 'EBD', hora: '10:00' };
+        if (diaSemana === 0 && tipoEvento === 'culto') return { nome: 'Culto da Noite', hora: '19:00' };
+        return null;
+      }
+
+      const evento = programacao(data, tipo);
+      const invalid = document.getElementById('invite-invalid');
+      const content = document.getElementById('invite-content');
+
+      if (!evento) {
+        invalid.style.display = 'block';
+        content.style.display = 'none';
+        return;
+      }
+
+      const inicio = new Date(`${data}T${evento.hora}:00${OFFSET}`);
+      const dataFormatada = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+      }).format(new Date(`${data}T12:00:00${OFFSET}`));
+
+      document.getElementById('event-name').textContent = evento.nome;
+      document.getElementById('event-date').textContent = `${dataFormatada} • ${evento.hora}`;
+      document.getElementById('invite-message').textContent = FRASES[fraseId];
+      document.title = `${evento.nome} — ICM Pinhos`;
+
+      function atualizarContagem() {
+        const agora = new Date();
+        const restante = inicio.getTime() - agora.getTime();
+        const texto = document.getElementById('countdown-text');
+        const grid = document.getElementById('count-grid');
+
+        if (restante <= 0) {
+          if (agora.getTime() - inicio.getTime() <= DURACAO_EVENTO_MS) {
+            texto.textContent = '🙏 O culto está acontecendo agora!';
+          } else {
+            texto.textContent = 'Este culto já foi realizado.';
+          }
+          grid.style.display = 'none';
+          return;
+        }
+
+        grid.style.display = 'grid';
+        const totalSeg = Math.floor(restante / 1000);
+        const dias = Math.floor(totalSeg / 86400);
+        const horas = Math.floor((totalSeg % 86400) / 3600);
+        const minutos = Math.floor((totalSeg % 3600) / 60);
+        const segundos = totalSeg % 60;
+
+        document.getElementById('cd-days').textContent = String(dias);
+        document.getElementById('cd-hours').textContent = String(horas).padStart(2, '0');
+        document.getElementById('cd-minutes').textContent = String(minutos).padStart(2, '0');
+        document.getElementById('cd-seconds').textContent = String(segundos).padStart(2, '0');
+
+        const partes = [];
+        if (dias) partes.push(`${dias}d`);
+        if (horas || dias) partes.push(`${horas}h`);
+        partes.push(`${minutos}min`);
+        if (!dias) partes.push(`${segundos}s`);
+        texto.textContent = `Faltam ${partes.join(' ')} para iniciar o culto!`;
+      }
+
+      window.compartilharConvite = async function compartilharConvite() {
+        const texto = `🙏 ICM Pinhos\n${evento.nome} — ${dataFormatada} às ${evento.hora}\n${FRASES[fraseId]}\n\n${window.location.href}`;
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: 'Convite — ICM Pinhos', text: texto });
+            return;
+          } catch (e) {
+            if (e && e.name === 'AbortError') return;
+          }
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+      };
+
+      atualizarContagem();
+      setInterval(atualizarContagem, 1000);
+    })();
+  </script>
+</body>
+</html>
