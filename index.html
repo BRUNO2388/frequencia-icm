@@ -948,7 +948,7 @@
   <!-- CONEXÃO FIREBASE E SUPORTE OFFLINE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1056,9 +1056,13 @@
             const chave = chaves[i];
             const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
             if (exigeAdmin && !window.isAdmin) continue;
+            let caminhoEfetivo = item.caminho;
+            if (!window.isAdmin && caminhoEfetivo.startsWith('cultos_app/registros/')) {
+              caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
+            }
             try {
-              if (item.acao === 'SET') await set(ref(db, item.caminho), item.valor);
-              else if (item.acao === 'REMOVE') await remove(ref(db, item.caminho));
+              if (item.acao === 'SET') await set(ref(db, caminhoEfetivo), item.valor);
+              else if (item.acao === 'REMOVE') await remove(ref(db, caminhoEfetivo));
               const txDelete = localDB.transaction("syncQueue", "readwrite");
               txDelete.objectStore("syncQueue").delete(chave);
             } catch (erro) {
@@ -1077,10 +1081,11 @@
     let unsubMembros = null;
     let unsubRegistros = null;
     let unsubAtual = null;
+    let unsubPendentes = null;
 
     function pararSincronizacaoFirebase() {
-      [unsubMembros, unsubRegistros, unsubAtual].forEach(fn => { if (fn) fn(); });
-      unsubMembros = unsubRegistros = unsubAtual = null;
+      [unsubMembros, unsubRegistros, unsubAtual, unsubPendentes].forEach(fn => { if (fn) fn(); });
+      unsubMembros = unsubRegistros = unsubAtual = unsubPendentes = null;
     }
 
     function salvarCacheAtual() {
@@ -1107,6 +1112,24 @@
           carregarChamadaCulto();
           gerarRelatorioMensal();
           salvarCacheAtual();
+        });
+
+        // Membro grava em "pendentes". O Admin promove somente cultos ainda inexistentes
+        // no histórico oficial. Assim um registro já consolidado nunca é sobrescrito por membro.
+        unsubPendentes = onValue(ref(db, 'cultos_app/pendentes'), async (snapshot) => {
+          const pendentes = snapshot.val() || {};
+          for (const [chaveCulto, registroPendente] of Object.entries(pendentes)) {
+            try {
+              const destino = ref(db, `cultos_app/registros/${chaveCulto}`);
+              const existente = await get(destino);
+              if (!existente.exists()) {
+                await set(destino, registroPendente);
+              }
+              await remove(ref(db, `cultos_app/pendentes/${chaveCulto}`));
+            } catch (erro) {
+              console.warn('Não foi possível consolidar o culto pendente.', chaveCulto, erro);
+            }
+          }
         });
       } else {
         unsubAtual = onValue(ref(db, 'cultos_app/atual'), (snapshot) => {
@@ -1295,6 +1318,11 @@
       }
 
       const gravarOuEnfileirar = (destino, valorDestino, remover = false) => {
+        // Histórico oficial é imutável para membro: gravações de chamada feitas por membro
+        // são redirecionadas para a área pendente até um Admin consolidá-las.
+        if (!window.isAdmin && destino.startsWith('cultos_app/registros/')) {
+          destino = destino.replace('cultos_app/registros/', 'cultos_app/pendentes/');
+        }
         if (navigator.onLine && window.dbSet) {
           const operacao = remover
             ? window.dbRemove(window.dbRef(window.db, destino))
