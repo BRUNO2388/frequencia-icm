@@ -940,7 +940,7 @@
       <div id="lista-membros-cadastrados"></div>
 
       <h2 style="margin-top: 30px; color: #b81d24;">⚙️ Configurações de Segurança</h2>
-      <button class="btn-main btn-pdf" style="margin-top: 10px;" onclick="alterarSenhaAdministrador()">🔐 Senha gerenciada no Firebase</button>
+      <button class="btn-main btn-pdf" style="margin-top: 10px;" onclick="alterarSenhaAdministrador()">🔐 Acesso gerenciado pelo Firebase</button>
     </div>
 
   </div>
@@ -996,23 +996,31 @@
       if (window.usuarioAtual) carregarDadosLocais();
     };
 
+    function cacheIdAtual() {
+      return window.isAdmin ? "cultos_app_admin" : "cultos_app_member";
+    }
+
     window.salvarDadosLocais = function(dados) {
-      if (!localDB) return;
+      if (!localDB || !window.usuarioAtual) return;
       const tx = localDB.transaction("appData", "readwrite");
-      tx.objectStore("appData").put({ id: "cultos_app", content: dados });
+      tx.objectStore("appData").put({ id: cacheIdAtual(), content: dados });
     };
 
-    function carregarDadosLocais() {
+    function limparCacheAdminLocal() {
       if (!localDB) return;
+      const tx = localDB.transaction("appData", "readwrite");
+      tx.objectStore("appData").delete("cultos_app_admin");
+    }
+
+    function carregarDadosLocais() {
+      if (!localDB || !window.usuarioAtual) return;
       const tx = localDB.transaction("appData", "readonly");
-      const req = tx.objectStore("appData").get("cultos_app");
+      const req = tx.objectStore("appData").get(cacheIdAtual());
       req.onsuccess = () => {
         if (req.result && req.result.content) {
           const data = req.result.content;
           window.membrosCadastrados = data.membros || {};
           window.registrosCultos = data.registros || {};
-          window.hashSenhaAdmin = data.config?.senhaAdminHash || null;
-          
           renderizarListaMembrosCadastrados();
           carregarChamadaCulto();
           atualizarSelectMembrosFiltro();
@@ -1029,65 +1037,124 @@
     };
 
     window.processarFilaSincronizacao = function() {
-      if (!localDB || !navigator.onLine || !window.usuarioAtual) return;
-      const tx = localDB.transaction("syncQueue", "readwrite");
+      if (!localDB || !navigator.onLine || !window.usuarioAtual || window.processandoFila) return;
+      window.processandoFila = true;
+      const tx = localDB.transaction("syncQueue", "readonly");
       const store = tx.objectStore("syncQueue");
-      const req = store.getAll();
+      const reqItens = store.getAll();
+      const reqChaves = store.getAllKeys();
 
-      req.onsuccess = () => {
-        const fila = req.result;
-        if (fila.length === 0) return;
-
-        fila.forEach(item => {
-          if (item.acao === 'SET') set(ref(db, item.caminho), item.valor);
-          else if (item.acao === 'REMOVE') remove(ref(db, item.caminho));
-        });
-
-        const txClear = localDB.transaction("syncQueue", "readwrite");
-        txClear.objectStore("syncQueue").clear();
-        atualizarStatusConexaoUI();
+      let itens = null;
+      let chaves = null;
+      const tentarProcessar = async () => {
+        if (!itens || !chaves) return;
+        try {
+          for (let i = 0; i < itens.length; i++) {
+            const item = itens[i];
+            const chave = chaves[i];
+            const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
+            if (exigeAdmin && !window.isAdmin) continue;
+            try {
+              if (item.acao === 'SET') await set(ref(db, item.caminho), item.valor);
+              else if (item.acao === 'REMOVE') await remove(ref(db, item.caminho));
+              const txDelete = localDB.transaction("syncQueue", "readwrite");
+              txDelete.objectStore("syncQueue").delete(chave);
+            } catch (erro) {
+              console.warn('Falha ao sincronizar item offline; permanecerá na fila.', item.caminho, erro);
+            }
+          }
+        } finally {
+          window.processandoFila = false;
+        }
       };
+      reqItens.onsuccess = () => { itens = reqItens.result || []; tentarProcessar(); };
+      reqChaves.onsuccess = () => { chaves = reqChaves.result || []; tentarProcessar(); };
+      reqItens.onerror = reqChaves.onerror = () => { window.processandoFila = false; };
     };
 
-    let unsubscribeCultos = null;
-    function iniciarSincronizacaoFirebase() {
-      if (unsubscribeCultos) return;
-      unsubscribeCultos = onValue(ref(db, 'cultos_app'), (snapshot) => {
-      const data = snapshot.val() || {};
-      window.membrosCadastrados = data.membros || {};
-      window.registrosCultos = data.registros || {};
-      window.hashSenhaAdmin = data.config?.senhaAdminHash || window.hashSenhaAdmin || null;
-      
+    let unsubMembros = null;
+    let unsubRegistros = null;
+    let unsubAtual = null;
+
+    function pararSincronizacaoFirebase() {
+      [unsubMembros, unsubRegistros, unsubAtual].forEach(fn => { if (fn) fn(); });
+      unsubMembros = unsubRegistros = unsubAtual = null;
+    }
+
+    function salvarCacheAtual() {
       window.salvarDadosLocais({
         membros: window.membrosCadastrados,
-        registros: window.registrosCultos,
-        config: { senhaAdminHash: window.hashSenhaAdmin }
-      });
-
-      renderizarListaMembrosCadastrados();
-      carregarChamadaCulto();
-      atualizarSelectMembrosFiltro();
-      if (window.isAdmin) gerarRelatorioMensal();
+        registros: window.registrosCultos
       });
     }
 
+    function iniciarSincronizacaoFirebase() {
+      if (unsubMembros || unsubAtual || unsubRegistros) return;
+
+      unsubMembros = onValue(ref(db, 'cultos_app/membros'), (snapshot) => {
+        window.membrosCadastrados = snapshot.val() || {};
+        renderizarListaMembrosCadastrados();
+        atualizarSelectMembrosFiltro();
+        carregarChamadaCulto();
+        salvarCacheAtual();
+      });
+
+      if (window.isAdmin) {
+        unsubRegistros = onValue(ref(db, 'cultos_app/registros'), (snapshot) => {
+          window.registrosCultos = snapshot.val() || {};
+          carregarChamadaCulto();
+          gerarRelatorioMensal();
+          salvarCacheAtual();
+        });
+      } else {
+        unsubAtual = onValue(ref(db, 'cultos_app/atual'), (snapshot) => {
+          const atual = snapshot.val() || {};
+          window.cultoAtual = atual;
+          window.registrosCultos = {};
+          if (atual.chave && atual.registro && atual.data === new Date().toISOString().split('T')[0]) {
+            window.registrosCultos[atual.chave] = atual.registro;
+            if (atual.tipo) document.getElementById('culto-tipo').value = atual.tipo;
+          }
+          carregarChamadaCulto();
+          salvarCacheAtual();
+        });
+      }
+    }
+
     onAuthStateChanged(auth, (user) => {
+      const eraAdmin = !!window.isAdmin;
       window.usuarioAtual = user || null;
       window.isAdmin = !!user && (user.email || '').toLowerCase() === 'icmpinhos@gmail.com';
       const overlay = document.getElementById('auth-overlay');
       const bar = document.getElementById('user-bar');
+      const inputDataCulto = document.getElementById('culto-data');
       if (user) {
         overlay.style.display = 'none';
         bar.style.display = 'flex';
         document.getElementById('user-info').textContent = window.isAdmin ? '👑 Administrador' : '👤 Membro';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('admin-visible', window.isAdmin));
+        if (!window.isAdmin) {
+          inputDataCulto.value = new Date().toISOString().split('T')[0];
+          inputDataCulto.disabled = true;
+          inputDataCulto.title = 'Membros registram apenas o culto do dia atual.';
+        } else {
+          inputDataCulto.disabled = false;
+          inputDataCulto.title = '';
+        }
+        window.registrosCultos = {};
         carregarDadosLocais();
         iniciarSincronizacaoFirebase();
+        window.processarFilaSincronizacao();
       } else {
+        if (eraAdmin) limparCacheAdminLocal();
         overlay.style.display = 'flex';
         bar.style.display = 'none';
+        inputDataCulto.disabled = false;
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-visible'));
-        if (unsubscribeCultos) { unsubscribeCultos(); unsubscribeCultos = null; }
+        pararSincronizacaoFirebase();
+        window.membrosCadastrados = {};
+        window.registrosCultos = {};
+        window.cultoAtual = {};
       }
     });
 
@@ -1122,6 +1189,24 @@
 
     window.isAdmin = false;
     window.usuarioAtual = null;
+    window.cultoAtual = {};
+    window.processandoFila = false;
+
+    function escapeHTML(valor) {
+      return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[caractere]);
+    }
+
+    function idSeguroParaHTML(valor) {
+      return encodeURIComponent(String(valor ?? ''));
+    }
+
+    function csvCampoSeguro(valor) {
+      let texto = String(valor ?? '').replace(/"/g, '""');
+      if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
+      return `"${texto}"`;
+    }
 
     async function entrarNoApp() {
       const usuario = document.getElementById('login-usuario').value.trim();
@@ -1206,27 +1291,54 @@
         alert('🔒 Esta alteração é restrita ao administrador.');
         return;
       }
-      if (navigator.onLine && window.dbSet) {
-        if (isRemove) window.dbRemove(window.dbRef(window.db, caminho));
-        else window.dbSet(window.dbRef(window.db, caminho), valor);
-      } else {
-        window.adicionarFilaSincronizacao(caminho, isRemove ? 'REMOVE' : 'SET', valor);
-      }
+
+      const gravarOuEnfileirar = (destino, valorDestino, remover = false) => {
+        if (navigator.onLine && window.dbSet) {
+          const operacao = remover
+            ? window.dbRemove(window.dbRef(window.db, destino))
+            : window.dbSet(window.dbRef(window.db, destino), valorDestino);
+          Promise.resolve(operacao).catch(() => {
+            window.adicionarFilaSincronizacao(destino, remover ? 'REMOVE' : 'SET', valorDestino);
+          });
+        } else {
+          window.adicionarFilaSincronizacao(destino, remover ? 'REMOVE' : 'SET', valorDestino);
+        }
+      };
+
+      gravarOuEnfileirar(caminho, valor, isRemove);
 
       const partes = caminho.split('/');
       if (partes[0] === 'cultos_app') {
         if (partes[1] === 'membros') {
           if (isRemove) delete window.membrosCadastrados[partes[2]];
           else window.membrosCadastrados[partes[2]] = valor;
-        } else if (partes[1] === 'config' && partes[2] === 'senhaAdminHash') {
-          window.hashSenhaAdmin = valor;
+        }
+
+        if (partes[1] === 'registros' && partes[2]) {
+          const chaveCulto = partes[2];
+          const dataCulto = chaveCulto.split('_')[0];
+          const hojeISO = new Date().toISOString().split('T')[0];
+          if (dataCulto === hojeISO) {
+            const restante = partes.slice(3).join('/');
+            const tipoCulto = document.getElementById('culto-tipo').value;
+            gravarOuEnfileirar('cultos_app/atual/chave', chaveCulto, false);
+            gravarOuEnfileirar('cultos_app/atual/data', hojeISO, false);
+            gravarOuEnfileirar('cultos_app/atual/tipo', tipoCulto, false);
+            if (restante) gravarOuEnfileirar(`cultos_app/atual/registro/${restante}`, valor, isRemove);
+            else gravarOuEnfileirar('cultos_app/atual/registro', valor, isRemove);
+            window.cultoAtual = {
+              chave: chaveCulto,
+              data: hojeISO,
+              tipo: tipoCulto,
+              registro: window.registrosCultos[chaveCulto] || {}
+            };
+          }
         }
       }
 
       window.salvarDadosLocais({
         membros: window.membrosCadastrados,
-        registros: window.registrosCultos,
-        config: { senhaAdminHash: window.hashSenhaAdmin }
+        registros: window.registrosCultos
       });
     }
 
@@ -1278,7 +1390,10 @@
       chaves.sort((a,b) => window.membrosCadastrados[a].nome.localeCompare(window.membrosCadastrados[b].nome));
       chaves.forEach(id => {
         const m = window.membrosCadastrados[id];
-        select.innerHTML += `<option value="${id}">${m.nome} (${m.categoria} - ${m.grupo || 'Grupo 1'})</option>`;
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = `${m.nome} (${m.categoria} - ${m.grupo || 'Grupo 1'})`;
+        select.appendChild(option);
       });
     }
 
@@ -1294,24 +1409,28 @@
       renderizarListaMembrosCadastrados();
     }
 
-    function editarMembro(id, nomeAtual, catAtual, grupoAtual) {
+    function editarMembro(id) {
       if (!window.isAdmin) { alert("Acesso restrito ao administrador."); return; }
-      const novoNome = prompt("Editar nome do membro:", nomeAtual);
+      const atual = window.membrosCadastrados[id];
+      if (!atual) return;
+      const novoNome = prompt("Editar nome do membro:", atual.nome || '');
       if (novoNome === null) return;
       const nomeFinal = novoNome.trim();
       if (!nomeFinal) { alert("O nome não pode ficar em branco!"); return; }
-      const novoGrupo = prompt("Editar grupo (Grupo 1, Grupo 2, Grupo 3):", grupoAtual || "Grupo 1");
+      const novoGrupo = prompt("Editar grupo (Grupo 1, Grupo 2, Grupo 3):", atual.grupo || "Grupo 1");
       if (novoGrupo === null) return;
 
       executarGravacao(`cultos_app/membros/${id}`, null, true);
       const novoId = nomeFinal.replace(/[.#$\[\]]/g, "_");
-      executarGravacao(`cultos_app/membros/${novoId}`, { nome: nomeFinal, categoria: catAtual, grupo: novoGrupo });
+      executarGravacao(`cultos_app/membros/${novoId}`, { nome: nomeFinal, categoria: atual.categoria, grupo: novoGrupo });
       renderizarListaMembrosCadastrados();
     }
 
-    function removerMembro(id, nome) {
+    function removerMembro(id) {
       if (!window.isAdmin) { alert("Acesso restrito ao administrador."); return; }
-      if (confirm(`Deseja remover ${nome} do cadastro permanente?`)) {
+      const atual = window.membrosCadastrados[id];
+      if (!atual) return;
+      if (confirm(`Deseja remover ${atual.nome} do cadastro permanente?`)) {
         executarGravacao(`cultos_app/membros/${id}`, null, true);
         renderizarListaMembrosCadastrados();
       }
@@ -1335,12 +1454,12 @@
             html += `
               <div class="member-manage-item">
                 <div class="member-manage-info">
-                  <span class="member-manage-name">${m.nome}</span>
-                  <span class="member-manage-group">(${grupoStr})</span>
+                  <span class="member-manage-name">${escapeHTML(m.nome)}</span>
+                  <span class="member-manage-group">(${escapeHTML(grupoStr)})</span>
                 </div>
                 <div class="member-manage-actions">
-                  <button class="member-action-btn edit" onclick="editarMembro('${k}', '${m.nome}', '${m.categoria}', '${grupoStr}')">✏️ Editar</button>
-                  <button class="member-action-btn delete" onclick="removerMembro('${k}', '${m.nome}')">✕ Excluir</button>
+                  <button class="member-action-btn edit" onclick="editarMembro(decodeURIComponent('${idSeguroParaHTML(k)}'))">✏️ Editar</button>
+                  <button class="member-action-btn delete" onclick="removerMembro(decodeURIComponent('${idSeguroParaHTML(k)}'))">✕ Excluir</button>
                 </div>
               </div>
             `;
@@ -1357,6 +1476,7 @@
     }
 
     function alternarStatusMembro(membroId) {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1370,6 +1490,7 @@
     }
 
     function adicionarPresencaRapida(membroId) {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1382,6 +1503,7 @@
     }
 
     function marcarTodos(status) {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const chavesMembros = Object.keys(window.membrosCadastrados);
       const objetoPresencas = {};
@@ -1393,6 +1515,7 @@
     }
 
     function adicionarVisitante() {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const input = document.getElementById('input-nome-visitante');
       let nome = input.value.trim();
       if (!nome) nome = "—";
@@ -1407,6 +1530,7 @@
     }
 
     function removerVisitante(index) {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) return;
       let listaVisitantes = window.registrosCultos[chaveCulto].visitantesLista || [];
@@ -1417,6 +1541,7 @@
     }
 
     function salvarCamposEvento() {
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const louvor = document.getElementById('culto-louvor').value;
       const palavra = document.getElementById('culto-palavra').value;
@@ -1464,8 +1589,8 @@
           const isPresente = presencas[id] === 'presente';
           const grupoStr = m.grupo || 'Grupo 1';
           html += `
-            <div class="search-result-item" onclick="adicionarPresencaRapida('${id}')">
-              <span><strong>${m.nome}</strong> (${m.categoria} • ${grupoStr})</span>
+            <div class="search-result-item" onclick="adicionarPresencaRapida(decodeURIComponent('${idSeguroParaHTML(id)}'))">
+              <span><strong>${escapeHTML(m.nome)}</strong> (${escapeHTML(m.categoria)} • ${escapeHTML(grupoStr)})</span>
               <span style="font-size:0.8rem; padding:4px 8px; border-radius:12px; font-weight:bold; ${isPresente ? 'background:#d4edda; color:#155724;' : 'background:#1c3d5a; color:#fff;'}">
                 ${isPresente ? 'Já Presente' : '+ Marcar Presente'}
               </span>
@@ -1498,7 +1623,7 @@
         divChips.innerHTML = '<small style="color:#888;">Nenhum visitante adicionado hoje.</small>';
       } else {
         visitantesLista.forEach((nomeV, index) => {
-          divChips.innerHTML += `<div class="visitor-chip"><span>👤 ${nomeV}</span><button onclick="removerVisitante(${index})">✕</button></div>`;
+          divChips.innerHTML += `<div class="visitor-chip"><span>👤 ${escapeHTML(nomeV)}</span><button onclick="removerVisitante(${index})">✕</button></div>`;
         });
       }
 
@@ -1516,10 +1641,10 @@
       let htmlFolha = `<div class="paper-title">${document.getElementById('culto-tipo').value} — ${inputData.value.split('-').reverse().join('/')}</div>`;
       htmlFolha += `
         <div class="info-evento-box">
-          <div><strong>🎤 Louvor:</strong> ${eventoInfo.louvor || '—'}</div>
-          <div><strong>📖 Palavra:</strong> ${eventoInfo.palavra || '—'}</div>
-          <div><strong>📜 Texto Lido:</strong> ${eventoInfo.textoLido || '—'}</div>
-          <div><strong>🚪 Portão:</strong> ${eventoInfo.portao || '—'}</div>
+          <div><strong>🎤 Louvor:</strong> ${escapeHTML(eventoInfo.louvor || '—')}</div>
+          <div><strong>📖 Palavra:</strong> ${escapeHTML(eventoInfo.palavra || '—')}</div>
+          <div><strong>📜 Texto Lido:</strong> ${escapeHTML(eventoInfo.textoLido || '—')}</div>
+          <div><strong>🚪 Portão:</strong> ${escapeHTML(eventoInfo.portao || '—')}</div>
         </div>
       `;
 
@@ -1537,11 +1662,11 @@
               totalP++;
               htmlPresencaCat += `
                 <div class="member-select-item">
-                  <div class="member-info"><span><strong>${m.nome}</strong></span><span class="member-tag">${cat} • ${grupoStr}</span></div>
-                  <button class="status-badge-btn presente" onclick="alternarStatusMembro('${id}')">Presente</button>
+                  <div class="member-info"><span><strong>${escapeHTML(m.nome)}</strong></span><span class="member-tag">${escapeHTML(cat)} • ${escapeHTML(grupoStr)}</span></div>
+                  <button class="status-badge-btn presente" onclick="alternarStatusMembro(decodeURIComponent('${idSeguroParaHTML(id)}'))">Presente</button>
                 </div>
               `;
-              tabelaFolhaCat += `<tr class="row-presente"><td style="width:50%;">${m.nome}</td><td style="width:25%;">${cat}</td><td style="width:25%;">${grupoStr}</td></tr>`;
+              tabelaFolhaCat += `<tr class="row-presente"><td style="width:50%;">${escapeHTML(m.nome)}</td><td style="width:25%;">${escapeHTML(cat)}</td><td style="width:25%;">${escapeHTML(grupoStr)}</td></tr>`;
             }
           });
           if (htmlPresencaCat !== '') divPresenca.innerHTML += `<h4 style="margin-top:12px; color:#1c3d5a; border-bottom:1px solid #ddd; font-weight:bold;">${cat}</h4>` + htmlPresencaCat;
@@ -1561,7 +1686,7 @@
       if (visitantesLista.length > 0) {
         let tabelaVisitantes = '';
         visitantesLista.forEach((vNome) => {
-          tabelaVisitantes += `<tr class="row-presente"><td style="width:50%;">${vNome}</td><td style="width:25%;">Visitantes</td><td style="width:25%;">—</td></tr>`;
+          tabelaVisitantes += `<tr class="row-presente"><td style="width:50%;">${escapeHTML(vNome)}</td><td style="width:25%;">Visitantes</td><td style="width:25%;">—</td></tr>`;
         });
         htmlFolha += `
           <div class="table-responsive">
@@ -1618,6 +1743,7 @@
     }
 
     function gerarRelatorioMensal() {
+      if (!window.isAdmin) return;
       const mesAno = document.getElementById('filtro-mes-ano').value;
       const tipoRelatorio = document.getElementById('filtro-tipo-relatorio').value;
       const filtroGrupo = document.getElementById('filtro-grupo-assistencia').value;
@@ -1735,9 +1861,9 @@
 
           tabelaLinhasGeral += `
             <tr class="${isAlerta ? 'row-alerta' : ''}">
-              <td style="width:38%;"><strong>${m.nome}</strong></td>
-              <td style="width:20%;">${m.categoria}</td>
-              <td style="width:16%;">${m.grupo || 'Grupo 1'}</td>
+              <td style="width:38%;"><strong>${escapeHTML(m.nome)}</strong></td>
+              <td style="width:20%;">${escapeHTML(m.categoria)}</td>
+              <td style="width:16%;">${escapeHTML(m.grupo || 'Grupo 1')}</td>
               <td style="width:14%; text-align:center;"><strong>${countPresencas}</strong> / ${totalCultosNoMes}</td>
               <td style="width:12%; text-align:center; font-weight:bold; color:${porc >= 70 ? '#155724' : porc >= 40 ? '#856404' : '#721c24'};">${porc}%</td>
             </tr>
@@ -1820,8 +1946,8 @@
           <div class="paper-title">RELATÓRIO DE FREQUÊNCIA INDIVIDUAL</div>
           
           <div style="background:#fdfbf7; border:1px solid #dcd3c1; padding:12px; border-radius:8px; margin-bottom:15px; font-size:0.9rem; color:#333;">
-            <div><strong>Membro:</strong> ${membroObj.nome}</div>
-            <div><strong>Classe:</strong> ${membroObj.categoria} | <strong>Grupo:</strong> ${membroObj.grupo || 'Grupo 1'}</div>
+            <div><strong>Membro:</strong> ${escapeHTML(membroObj.nome)}</div>
+            <div><strong>Classe:</strong> ${escapeHTML(membroObj.categoria)} | <strong>Grupo:</strong> ${escapeHTML(membroObj.grupo || 'Grupo 1')}</div>
             <div><strong>Mês de Referência:</strong> ${mesNomeExtenso}</div>
           </div>
 
@@ -1972,7 +2098,7 @@
         let presencas = 0;
         cultosDoMes.forEach(chave => { if (window.registrosCultos[chave]?.presencas?.[id] === 'presente') presencas++; });
         let porc = totalCultos > 0 ? ((presencas / totalCultos) * 100).toFixed(0) : 0;
-        csv += `"${m.nome}";"${m.categoria}";"${m.grupo || 'Grupo 1'}";${presencas};${totalCultos};${porc}%\n`;
+        csv += `${csvCampoSeguro(m.nome)};${csvCampoSeguro(m.categoria)};${csvCampoSeguro(m.grupo || 'Grupo 1')};${presencas};${totalCultos};${porc}%\n`;
       });
 
       const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
