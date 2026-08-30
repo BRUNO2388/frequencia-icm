@@ -1,0 +1,51 @@
+name: Run Convite V10
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-convite-v10.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: convite-culto-v10
+          fetch-depth: 0
+
+      - name: Aplicar gerador de convite
+        run: python tools/patch_convite_v10.py
+
+      - name: Validar arquivos e sintaxe
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "index.html"
+          test -f convite.html
+          grep -q '📣 Convite do culto' index.html
+          grep -q 'compartilharConviteWhatsApp' index.html
+          grep -q 'Faltam .* para iniciar o culto' convite.html
+          node - <<'NODE'
+          const fs = require('fs');
+          for (const file of ['index.html', 'convite.html']) {
+            const html = fs.readFileSync(file, 'utf8');
+            const re = /<script(?![^>]*\bsrc=)(?![^>]*\btype=["']module["'])[^>]*>([\s\S]*?)<\/script>/gi;
+            let m, n = 0;
+            while ((m = re.exec(html))) {
+              n++;
+              new Function(m[1]);
+            }
+            if (!n) throw new Error(`Nenhum script classico encontrado em ${file}`);
+          }
+          NODE
+
+      - name: Commit e push
+        run: |
+          git config user.name 'github-actions-bot'
+          git config user.email 'github-actions-bot@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Adiciona gerador de convite com contagem regressiva'
+          git push origin HEAD:convite-culto-v10
