@@ -506,21 +506,23 @@
   }
 
   .floating-counter {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
+    position: static;
+    flex:1 1 auto;
+    min-width:0;
+    max-width:300px;
     background: var(--primary);
     color: #ffffff;
-    padding: 12px 18px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    z-index: 9999;
+    padding: 7px 10px;
+    border-radius: 22px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     display: flex;
     align-items: center;
-    gap: 8px;
-    border: 2px solid var(--bg-container);
+    justify-content:center;
+    gap: 5px;
+    border: 1px solid var(--bg-container);
+    white-space:nowrap;
   }
 
   .podium-box {
@@ -676,7 +678,9 @@
     .info-evento-box { grid-template-columns: 1fr; }
     .paper-sheet { padding: 12px; }
     .tab-btn { font-size: 0.75rem; padding: 8px 4px; }
-    .floating-counter { bottom: 15px; right: 15px; padding: 10px 14px; font-size: 0.85rem; }
+    .user-bar { gap:6px; padding:5px 0; font-size:.76rem; }
+    .floating-counter { max-width:none; padding:6px 8px; gap:4px; font-size:.72rem; box-shadow:0 2px 6px rgba(0,0,0,.16); }
+    .floating-counter .counter-word { display:none; }
     .podium-box { grid-template-columns: 1fr; }
     .card-kpi-grid { grid-template-columns: 1fr; }
   }
@@ -770,7 +774,9 @@
   .auth-card { width:100%; max-width:380px; background:var(--bg-container); border:1px solid var(--border-color); border-radius:14px; padding:24px; box-shadow:0 8px 30px var(--shadow); }
   .auth-card h2 { margin-top:0; }
   .auth-error { color:var(--danger-text); font-size:.85rem; margin-top:10px; min-height:20px; text-align:center; }
-  .user-bar { width:100%; max-width:680px; display:none; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; font-size:.82rem; color:var(--text-secondary); }
+  .user-bar { width:100%; max-width:680px; display:none; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; padding:6px 2px; font-size:.82rem; color:var(--text-secondary); position:sticky; top:6px; z-index:15000; background:var(--bg-body); border-radius:12px; }
+  #user-info { flex:0 0 auto; font-weight:700; white-space:nowrap; }
+  .user-bar > .btn-small-sec { flex:0 0 auto; }
   .admin-only { display:none; }
   .admin-only.admin-visible { display:block; }
 </style>
@@ -787,20 +793,21 @@
       <div id="login-erro" class="auth-error"></div>
     </div>
   </div>
-  <div id="user-bar" class="user-bar no-print"><span id="user-info"></span><button class="btn-small-sec" onclick="sairDoApp()">Sair</button></div>
+  <div id="user-bar" class="user-bar no-print">
+    <span id="user-info"></span>
+    <div id="badge-contador-flutuante" class="floating-counter" title="Membros presentes • visitantes • total">
+      <span>👥 <span id="floating-membros-count">0</span><span class="counter-word"> membros</span></span>
+      <span>• 🙋 <span id="floating-visitantes-count">0</span><span class="counter-word"> visitantes</span></span>
+      <strong>• Total <span id="floating-presenca-count">0</span></strong>
+    </div>
+    <button class="btn-small-sec" onclick="sairDoApp()">Sair</button>
+  </div>
 
 
   <!-- STATUS DA CONEXÃO DE INTERNET -->
   <div id="net-status" class="net-status-bar online">
     <span id="net-status-icon">🟢</span>
     <span id="net-status-text">Conectado (Sincronizado com o Firebase)</span>
-  </div>
-
-  <!-- CONTADOR FLUTUANTE -->
-  <div id="badge-contador-flutuante" class="floating-counter">
-    <span>👥 <span id="floating-membros-count">0</span> membros</span>
-    <span>• <span id="floating-visitantes-count">0</span> visitantes</span>
-    <strong>• Total <span id="floating-presenca-count">0</span></strong>
   </div>
 
   <div class="container">
