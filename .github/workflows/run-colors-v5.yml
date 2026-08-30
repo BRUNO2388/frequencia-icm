@@ -1,0 +1,70 @@
+name: Run Colors V5
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-colors-v5.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: visual-colors-v5
+          fetch-depth: 0
+      - name: Refine palette
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          t = p.read_text(encoding='utf-8')
+          replacements = {
+              '#2d6a4f': '#2f6b57',
+              '#1f513b': '#245344',
+              '#1c3d5a': '#2d4f62',
+              '#4f789c': '#63879c',
+              '#5b8fc4': '#3b746d',
+              '#315f8c': '#2d5268',
+              '#6f9dcc': '#5d8582',
+              '#243b53': '#23433f',
+              '#142536': '#1a2f3d',
+              '#38566f': '#375d5e',
+              '#4caf7d': '#5ab58a',
+              '#3d9868': '#499c75',
+              '#7eb6e6': '#8ab8d0',
+              '#9bc7eb': '#a5c9da',
+              '#007bff': '#3f6f91',
+              '#dc3545': '#a4474d',
+              '#17a2b8': '#4f7f86',
+              '#42a5f5': '#4c86a8',
+              '#ef5350': '#b95d61',
+              '#c62828': '#9f4247',
+              '#ff8a80': '#e79a9d',
+              '#1b4332': '#285744',
+              'rgba(76, 175, 125, 0.15)': 'rgba(47, 107, 87, 0.16)'
+          }
+          missing = [old for old in replacements if old not in t]
+          if missing:
+              raise SystemExit('Cores esperadas nao encontradas: ' + ', '.join(missing))
+          for old, new in replacements.items():
+              t = t.replace(old, new)
+          p.write_text(t, encoding='utf-8')
+          PY
+      - name: Validate scope
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = "index.html "
+          grep -q -- '--primary: #2f6b57;' index.html
+          grep -q 'linear-gradient(135deg, #3b746d 0%, #2d5268 100%)' index.html
+          grep -q '.btn-pdf { background-color: #a4474d' index.html
+      - name: Commit refined palette
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Refina paleta visual e identidade de cores'
+          git push origin HEAD:visual-colors-v5
