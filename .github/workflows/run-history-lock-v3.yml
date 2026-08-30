@@ -1,0 +1,44 @@
+name: Run History Lock V3
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-history-lock-v3.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apply-to-test-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security-hardening-v2
+          fetch-depth: 0
+      - name: Apply history lock
+        run: python scripts/history_lock_v3.py
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s+type="module")?>(.*?)</script>',s,re.S)
+          for i,code in enumerate(scripts):
+              pathlib.Path(f'/tmp/script{i}.js').write_text(code,encoding='utf-8')
+          print('scripts:', len(scripts))
+          PY
+          for f in /tmp/script*.js; do node --check "$f"; done
+      - name: Verify markers
+        run: |
+          grep -q "cultos_app/pendentes" index.html
+          grep -q "const existente = await get(destino)" index.html
+          grep -q "onValue, get" index.html
+      - name: Commit to test branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Protege histórico oficial contra alterações de membros"
+          git push origin HEAD:security-hardening-v2
