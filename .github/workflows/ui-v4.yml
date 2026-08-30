@@ -1,0 +1,61 @@
+name: UI V4 Test
+
+on:
+  push:
+    branches: [visual-dashboard-v4]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: visual-dashboard-v4
+          fetch-depth: 0
+
+      - name: Apply UI V4
+        run: python scripts/ui_v4.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script([^>]*)>(.*?)</script>', html, flags=re.S|re.I)
+          out = Path('/tmp/icm-js')
+          out.mkdir(exist_ok=True)
+          count = 0
+          for attrs, body in scripts:
+              if 'src=' in attrs.lower():
+                  continue
+              ext = '.mjs' if 'type="module"' in attrs.lower() or "type='module'" in attrs.lower() else '.js'
+              f = out / f'script-{count}{ext}'
+              f.write_text(body, encoding='utf-8')
+              count += 1
+          print(count)
+          PY
+          for f in /tmp/icm-js/*; do node --check "$f"; done
+
+      - name: Verify V4 markers
+        run: |
+          grep -q 'id="tab-painel"' index.html
+          grep -q 'id="calendar-grid"' index.html
+          grep -q 'alternarFinalizacaoCulto' index.html
+          grep -q 'filtroChamadaAtual' index.html
+          grep -q 'status-badge-btn.*ausente' index.html
+
+      - name: Commit generated index
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Implementa painel, calendario e finalizacao do culto"
+          git push origin HEAD:visual-dashboard-v4
