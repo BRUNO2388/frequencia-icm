@@ -78,7 +78,26 @@ repls.append((
         if (navigator.onLine && window.dbSet) {'''
 ))
 
+repls.append((
+'''            const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
+            if (exigeAdmin && !window.isAdmin) continue;
+            try {
+              if (item.acao === 'SET') await set(ref(db, item.caminho), item.valor);
+              else if (item.acao === 'REMOVE') await remove(ref(db, item.caminho));''',
+'''            const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
+            if (exigeAdmin && !window.isAdmin) continue;
+            let caminhoEfetivo = item.caminho;
+            if (!window.isAdmin && caminhoEfetivo.startsWith('cultos_app/registros/')) {
+              caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
+            }
+            try {
+              if (item.acao === 'SET') await set(ref(db, caminhoEfetivo), item.valor);
+              else if (item.acao === 'REMOVE') await remove(ref(db, caminhoEfetivo));'''
+))
+
 for old, new in repls:
+    if new in text:
+        continue
     if old not in text:
         raise SystemExit('Trecho esperado não encontrado:\n' + old[:180])
     text = text.replace(old, new, 1)
