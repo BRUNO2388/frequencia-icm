@@ -1,0 +1,43 @@
+name: History Lock V3
+
+on:
+  push:
+    branches: [security-hardening-v2]
+    paths:
+      - 'scripts/history_lock_v3.py'
+      - '.github/workflows/history-lock-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  lock-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply history lock
+        run: python scripts/history_lock_v3.py
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s+type="module")?>(.*?)</script>',s,re.S)
+          for i,code in enumerate(scripts):
+              pathlib.Path(f'/tmp/script{i}.js').write_text(code,encoding='utf-8')
+          print(len(scripts))
+          PY
+          for f in /tmp/script*.js; do node --check "$f"; done
+      - name: Verify markers
+        run: |
+          grep -q "cultos_app/pendentes" index.html
+          grep -q "const existente = await get(destino)" index.html
+          grep -q "import { getDatabase, ref, set, remove, onValue, get }" index.html
+      - name: Commit locked history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Protege histórico oficial contra alterações de membros"
+          git push
