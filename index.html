@@ -993,6 +993,8 @@
     };
     request.onsuccess = (e) => {
       localDB = e.target.result;
+      const cleanupTx = localDB.transaction("appData", "readwrite");
+      cleanupTx.objectStore("appData").delete("cultos_app");
       if (window.usuarioAtual) carregarDadosLocais();
     };
 
