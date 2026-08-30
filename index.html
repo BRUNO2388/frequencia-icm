@@ -689,9 +689,30 @@
     .table-responsive { overflow: visible; }
     .report-table { min-width: 100%; }
   }
+
+  .auth-overlay { position: fixed; inset: 0; z-index: 20000; background: var(--bg-body); display:flex; align-items:center; justify-content:center; padding:20px; }
+  .auth-card { width:100%; max-width:380px; background:var(--bg-container); border:1px solid var(--border-color); border-radius:14px; padding:24px; box-shadow:0 8px 30px var(--shadow); }
+  .auth-card h2 { margin-top:0; }
+  .auth-error { color:var(--danger-text); font-size:.85rem; margin-top:10px; min-height:20px; text-align:center; }
+  .user-bar { width:100%; max-width:680px; display:none; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; font-size:.82rem; color:var(--text-secondary); }
+  .admin-only { display:none; }
+  .admin-only.admin-visible { display:block; }
 </style>
 </head>
 <body>
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <h2>🔐 Acesso ao Frequência ICM</h2>
+      <label>Usuário</label>
+      <input id="login-usuario" type="text" autocomplete="username" placeholder="Usuário ou e-mail">
+      <label>Senha</label>
+      <input id="login-senha" type="password" autocomplete="current-password" placeholder="Senha" onkeydown="if(event.key==='Enter') entrarNoApp()">
+      <button class="btn-main" onclick="entrarNoApp()">Entrar</button>
+      <div id="login-erro" class="auth-error"></div>
+    </div>
+  </div>
+  <div id="user-bar" class="user-bar no-print"><span id="user-info"></span><button class="btn-small-sec" onclick="sairDoApp()">Sair</button></div>
+
 
   <!-- STATUS DA CONEXÃO DE INTERNET -->
   <div id="net-status" class="net-status-bar online">
@@ -724,8 +745,8 @@
     <div class="nav-tabs no-print">
       <button class="tab-btn active" onclick="alternarAba('chamada')">📝 Chamada</button>
       <button class="tab-btn" onclick="alternarAba('relatorio')">📄 Relatório Culto</button>
-      <button class="tab-btn" onclick="alternarAba('mensal')">🔒 Relatório Mensal</button>
-      <button class="tab-btn" onclick="alternarAba('membros')">🔒 Cadastrar Membros</button>
+      <button class="tab-btn admin-only" onclick="alternarAba('mensal')">🔒 Relatório Mensal</button>
+      <button class="tab-btn admin-only" onclick="alternarAba('membros')">🔒 Cadastrar Membros</button>
     </div>
 
     <!-- ABA 1: CHAMADA DO CULTO -->
@@ -919,7 +940,7 @@
       <div id="lista-membros-cadastrados"></div>
 
       <h2 style="margin-top: 30px; color: #b81d24;">⚙️ Configurações de Segurança</h2>
-      <button class="btn-main btn-pdf" style="margin-top: 10px;" onclick="alterarSenhaAdministrador()">🔑 Alterar Senha do Administrador</button>
+      <button class="btn-main btn-pdf" style="margin-top: 10px;" onclick="alterarSenhaAdministrador()">🔐 Senha gerenciada no Firebase</button>
     </div>
 
   </div>
@@ -928,6 +949,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB-slUGWh8PnjW63craYa-BgTvjSoIJm2A",
@@ -942,11 +964,15 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
 
     window.db = db;
     window.dbRef = ref;
     window.dbSet = set;
     window.dbRemove = remove;
+    window.firebaseAuth = auth;
+    window.firebaseSignIn = signInWithEmailAndPassword;
+    window.firebaseSignOut = signOut;
 
     if ('serviceWorker' in navigator) {
       const swCode = `
@@ -967,7 +993,7 @@
     };
     request.onsuccess = (e) => {
       localDB = e.target.result;
-      carregarDadosLocais();
+      if (window.usuarioAtual) carregarDadosLocais();
     };
 
     window.salvarDadosLocais = function(dados) {
@@ -990,7 +1016,7 @@
           renderizarListaMembrosCadastrados();
           carregarChamadaCulto();
           atualizarSelectMembrosFiltro();
-          gerarRelatorioMensal();
+          if (window.isAdmin) gerarRelatorioMensal();
         }
       };
     }
@@ -1003,7 +1029,7 @@
     };
 
     window.processarFilaSincronizacao = function() {
-      if (!localDB || !navigator.onLine) return;
+      if (!localDB || !navigator.onLine || !window.usuarioAtual) return;
       const tx = localDB.transaction("syncQueue", "readwrite");
       const store = tx.objectStore("syncQueue");
       const req = store.getAll();
@@ -1023,7 +1049,10 @@
       };
     };
 
-    onValue(ref(db, 'cultos_app'), (snapshot) => {
+    let unsubscribeCultos = null;
+    function iniciarSincronizacaoFirebase() {
+      if (unsubscribeCultos) return;
+      unsubscribeCultos = onValue(ref(db, 'cultos_app'), (snapshot) => {
       const data = snapshot.val() || {};
       window.membrosCadastrados = data.membros || {};
       window.registrosCultos = data.registros || {};
@@ -1038,7 +1067,28 @@
       renderizarListaMembrosCadastrados();
       carregarChamadaCulto();
       atualizarSelectMembrosFiltro();
-      gerarRelatorioMensal();
+      if (window.isAdmin) gerarRelatorioMensal();
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      window.usuarioAtual = user || null;
+      window.isAdmin = !!user && (user.email || '').toLowerCase() === 'icmpinhos@gmail.com';
+      const overlay = document.getElementById('auth-overlay');
+      const bar = document.getElementById('user-bar');
+      if (user) {
+        overlay.style.display = 'none';
+        bar.style.display = 'flex';
+        document.getElementById('user-info').textContent = window.isAdmin ? '👑 Administrador' : '👤 Membro';
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('admin-visible', window.isAdmin));
+        carregarDadosLocais();
+        iniciarSincronizacaoFirebase();
+      } else {
+        overlay.style.display = 'flex';
+        bar.style.display = 'none';
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-visible'));
+        if (unsubscribeCultos) { unsubscribeCultos(); unsubscribeCultos = null; }
+      }
     });
 
     function atualizarStatusConexaoUI() {
@@ -1069,6 +1119,32 @@
     window.registrosCultos = {};
     window.hashSenhaAdmin = null;
     let chartInstancia = null;
+
+    window.isAdmin = false;
+    window.usuarioAtual = null;
+
+    async function entrarNoApp() {
+      const usuario = document.getElementById('login-usuario').value.trim();
+      const senha = document.getElementById('login-senha').value;
+      const erro = document.getElementById('login-erro');
+      erro.textContent = '';
+      if (!usuario || !senha) { erro.textContent = 'Informe usuário e senha.'; return; }
+      const usuarioNormalizado = usuario.toLowerCase();
+      const email = usuarioNormalizado === 'admin'
+        ? 'icmpinhos@gmail.com'
+        : (usuario.includes('@') ? usuario : `${usuarioNormalizado}@frequencia-icm.app`);
+      try {
+        await window.firebaseSignIn(window.firebaseAuth, email, senha);
+        document.getElementById('login-senha').value = '';
+      } catch (e) {
+        erro.textContent = 'Usuário ou senha inválidos.';
+      }
+    }
+
+    async function sairDoApp() {
+      await window.firebaseSignOut(window.firebaseAuth);
+      alternarAba('chamada');
+    }
 
     /**
      * Função auxiliar para gerar Hash simples do texto digitado
@@ -1124,6 +1200,12 @@
     verificarDiaDaSemana();
 
     function executarGravacao(caminho, valor, isRemove = false) {
+      if (!window.usuarioAtual) { alert("Faça login para salvar alterações."); return; }
+      const caminhoRestritoAdmin = caminho.startsWith('cultos_app/membros/') || caminho.startsWith('cultos_app/config/');
+      if (caminhoRestritoAdmin && !window.isAdmin) {
+        alert('🔒 Esta alteração é restrita ao administrador.');
+        return;
+      }
       if (navigator.onLine && window.dbSet) {
         if (isRemove) window.dbRemove(window.dbRef(window.db, caminho));
         else window.dbSet(window.dbRef(window.db, caminho), valor);
@@ -1149,23 +1231,9 @@
     }
 
     function alternarAba(nomeAba) {
-      if (nomeAba === 'membros' || nomeAba === 'mensal') {
-        if (!window.hashSenhaAdmin) {
-          const novasenha = prompt("🔒 Nenhuma senha cadastrada. Crie uma senha para o Administrador:");
-          if (!novasenha || !novasenha.trim()) {
-            alert("❌ A criação de senha é obrigatória para acessar áreas restritas.");
-            return;
-          }
-          const hashNovo = gerarHashSenha(novasenha.trim());
-          executarGravacao('cultos_app/config/senhaAdminHash', hashNovo);
-          alert("✅ Senha configurada com sucesso!");
-        } else {
-          const senhaDigitada = prompt("🔒 Área Restrita a Administradores.\nDigite a senha para acessar:");
-          if (!senhaDigitada || gerarHashSenha(senhaDigitada.trim()) !== window.hashSenhaAdmin) {
-            alert("❌ Senha incorreta! Acesso negado.");
-            return;
-          }
-        }
+      if ((nomeAba === 'membros' || nomeAba === 'mensal') && !window.isAdmin) {
+        alert('🔒 Área restrita ao administrador.');
+        return;
       }
 
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1194,12 +1262,7 @@
     }
 
     function alterarSenhaAdministrador() {
-      const novaSenha = prompt("🔑 Digite a nova senha do Administrador:");
-      if (!novaSenha || !novaSenha.trim()) { alert("A senha não pode ser vazia!"); return; }
-      
-      const novoHash = gerarHashSenha(novaSenha.trim());
-      executarGravacao('cultos_app/config/senhaAdminHash', novoHash);
-      alert("✅ Senha alterada com sucesso!");
+      alert("A senha administrativa agora é gerenciada pelo Firebase Authentication.");
     }
 
     function alternarFiltroMembro() {
@@ -1220,6 +1283,7 @@
     }
 
     function cadastrarMembro() {
+      if (!window.isAdmin) { alert("Acesso restrito ao administrador."); return; }
       const nome = document.getElementById('novo-nome').value.trim();
       const categoria = document.getElementById('nova-categoria').value;
       const grupo = document.getElementById('novo-grupo').value;
@@ -1231,6 +1295,7 @@
     }
 
     function editarMembro(id, nomeAtual, catAtual, grupoAtual) {
+      if (!window.isAdmin) { alert("Acesso restrito ao administrador."); return; }
       const novoNome = prompt("Editar nome do membro:", nomeAtual);
       if (novoNome === null) return;
       const nomeFinal = novoNome.trim();
@@ -1245,6 +1310,7 @@
     }
 
     function removerMembro(id, nome) {
+      if (!window.isAdmin) { alert("Acesso restrito ao administrador."); return; }
       if (confirm(`Deseja remover ${nome} do cadastro permanente?`)) {
         executarGravacao(`cultos_app/membros/${id}`, null, true);
         renderizarListaMembrosCadastrados();
