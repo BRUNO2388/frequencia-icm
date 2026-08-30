@@ -1,0 +1,66 @@
+name: Run Filtro V6
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-filtro-v6.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: filtro-chamada-v6
+          fetch-depth: 0
+      - name: Ajustar filtros da chamada
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          t = p.read_text(encoding='utf-8')
+
+          old_buttons = '''      <div class="filter-chips" id="filtros-chamada">
+        <button class="filter-chip active" data-filter="TODOS" onclick="setFiltroChamada('TODOS', this)">Todos</button>
+        <button class="filter-chip" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
+        <button class="filter-chip" data-filter="AUSENTES" onclick="setFiltroChamada('AUSENTES', this)">❌ Ausentes</button>
+        <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>'''
+          new_buttons = '''      <div class="filter-chips" id="filtros-chamada">
+        <button class="filter-chip active" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
+        <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>'''
+
+          old_default = "    window.filtroChamadaAtual = 'TODOS';"
+          new_default = "    window.filtroChamadaAtual = 'PRESENTES';"
+
+          old_logic = "            const filtro = window.filtroChamadaAtual || 'TODOS';\n            const mostrar = filtro === 'TODOS' || (filtro === 'PRESENTES' && status === 'presente') || (filtro === 'AUSENTES' && status !== 'presente') || filtro === cat;"
+          new_logic = "            const filtro = window.filtroChamadaAtual || 'PRESENTES';\n            const mostrar = (filtro === 'PRESENTES' && status === 'presente') || filtro === cat;"
+
+          for old, new, label in [
+              (old_buttons, new_buttons, 'botoes'),
+              (old_default, new_default, 'padrao'),
+              (old_logic, new_logic, 'logica')
+          ]:
+              if old not in t:
+                  raise SystemExit(f'Trecho esperado nao encontrado: {label}')
+              t = t.replace(old, new, 1)
+
+          p.write_text(t, encoding='utf-8')
+          PY
+      - name: Validar ajuste
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = "index.html "
+          grep -q "window.filtroChamadaAtual = 'PRESENTES';" index.html
+          grep -q 'filter-chip active.*PRESENTES' index.html
+          ! grep -q 'data-filter="TODOS"' index.html
+          ! grep -q 'data-filter="AUSENTES"' index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Simplifica filtros da chamada e prioriza presentes'
+          git push origin HEAD:filtro-chamada-v6
