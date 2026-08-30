@@ -1478,7 +1478,7 @@
     }
 
     function alternarStatusMembro(membroId) {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1492,7 +1492,7 @@
     }
 
     function adicionarPresencaRapida(membroId) {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1505,7 +1505,7 @@
     }
 
     function marcarTodos(status) {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const chavesMembros = Object.keys(window.membrosCadastrados);
       const objetoPresencas = {};
@@ -1517,7 +1517,7 @@
     }
 
     function adicionarVisitante() {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const input = document.getElementById('input-nome-visitante');
       let nome = input.value.trim();
       if (!nome) nome = "—";
@@ -1532,7 +1532,7 @@
     }
 
     function removerVisitante(index) {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) return;
       let listaVisitantes = window.registrosCultos[chaveCulto].visitantesLista || [];
@@ -1543,7 +1543,7 @@
     }
 
     function salvarCamposEvento() {
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('-')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const louvor = document.getElementById('culto-louvor').value;
       const palavra = document.getElementById('culto-palavra').value;
