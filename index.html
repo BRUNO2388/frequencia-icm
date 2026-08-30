@@ -903,9 +903,7 @@
       </div>
 
       <div class="filter-chips" id="filtros-chamada">
-        <button class="filter-chip active" data-filter="TODOS" onclick="setFiltroChamada('TODOS', this)">Todos</button>
-        <button class="filter-chip" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
-        <button class="filter-chip" data-filter="AUSENTES" onclick="setFiltroChamada('AUSENTES', this)">❌ Ausentes</button>
+        <button class="filter-chip active" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
         <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>
         <button class="filter-chip" data-filter="Senhoras" onclick="setFiltroChamada('Senhoras', this)">Senhoras</button>
         <button class="filter-chip" data-filter="Jovens" onclick="setFiltroChamada('Jovens', this)">Jovens</button>
@@ -1324,7 +1322,7 @@
     window.usuarioAtual = null;
     window.cultoAtual = {};
     window.processandoFila = false;
-    window.filtroChamadaAtual = 'TODOS';
+    window.filtroChamadaAtual = 'PRESENTES';
     window.mesCalendario = null;
 
     function escapeHTML(valor) {
@@ -1934,8 +1932,8 @@
               totalP++;
               tabelaFolhaCat += `<tr class="row-presente"><td style="width:50%;">${escapeHTML(m.nome)}</td><td style="width:25%;">${escapeHTML(cat)}</td><td style="width:25%;">${escapeHTML(grupoStr)}</td></tr>`;
             }
-            const filtro = window.filtroChamadaAtual || 'TODOS';
-            const mostrar = filtro === 'TODOS' || (filtro === 'PRESENTES' && status === 'presente') || (filtro === 'AUSENTES' && status !== 'presente') || filtro === cat;
+            const filtro = window.filtroChamadaAtual || 'PRESENTES';
+            const mostrar = (filtro === 'PRESENTES' && status === 'presente') || filtro === cat;
             if (mostrar) {
               htmlPresencaCat += `
                 <div class="member-select-item">
