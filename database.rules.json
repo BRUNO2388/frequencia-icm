@@ -9,17 +9,24 @@
       ".write": false
     },
     "cultos_app": {
-      ".read": "auth != null",
       "membros": {
+        ".read": "auth != null",
         ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'"
       },
+      "atual": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
       "registros": {
+        ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
         ".write": "auth != null"
       },
       "config": {
+        ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
         ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'"
       },
       "$other": {
+        ".read": false,
         ".write": false
       }
     }
