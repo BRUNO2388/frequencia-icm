@@ -788,6 +788,8 @@
   .user-bar > .btn-small-sec { flex:0 0 auto; }
   .admin-only { display:none; }
   .admin-only.admin-visible { display:block; }
+  .chamada-bulk-actions { justify-content:space-between; margin-bottom:12px; gap:6px; }
+  .chamada-bulk-actions.admin-visible { display:flex; }
 </style>
 </head>
 <body>
@@ -994,7 +996,7 @@
         <button type="button" class="filter-chip" data-filter="Bebês">Bebês</button>
       </div>
       
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px; gap: 6px;">
+      <div class="admin-only chamada-bulk-actions">
         <button class="btn-small-sec" onclick="marcarTodos('presente')">✅ Marcar Todos Presentes</button>
         <button class="btn-small-sec" onclick="marcarTodos('ausente')">🔄 Limpar Chamada</button>
       </div>
@@ -1238,10 +1240,25 @@
           for (let i = 0; i < itens.length; i++) {
             const item = itens[i];
             const chave = chaves[i];
+
+            // Nunca reaplica o espelho de uma sessão anterior: ele é somente tempo real.
+            if (item.caminho === 'cultos_app/atual' || item.caminho.startsWith('cultos_app/atual/')) {
+              const txDeleteAtual = localDB.transaction("syncQueue", "readwrite");
+              txDeleteAtual.objectStore("syncQueue").delete(chave);
+              continue;
+            }
+
             const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
             if (exigeAdmin && !window.isAdmin) continue;
             let caminhoEfetivo = item.caminho;
             if (!window.isAdmin && caminhoEfetivo.startsWith('cultos_app/registros/')) {
+              const hojeMembro = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+              const cultoIdFila = caminhoEfetivo.split('/')[2] || '';
+              if (!cultoIdFila.startsWith(`${hojeMembro}_`)) {
+                const txDeleteAntigo = localDB.transaction("syncQueue", "readwrite");
+                txDeleteAntigo.objectStore("syncQueue").delete(chave);
+                continue;
+              }
               caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
             }
             try {
@@ -1277,6 +1294,30 @@
         membros: window.membrosCadastrados,
         registros: window.registrosCultos
       });
+    }
+
+    function mesclarRegistroPendente(registroOficial, registroPendente) {
+      const oficial = registroOficial && typeof registroOficial === 'object' ? registroOficial : {};
+      const pendente = registroPendente && typeof registroPendente === 'object' ? registroPendente : {};
+      const resultado = { ...oficial };
+
+      if (pendente.presencas && typeof pendente.presencas === 'object') {
+        resultado.presencas = { ...(oficial.presencas || {}), ...pendente.presencas };
+      }
+      if (Object.prototype.hasOwnProperty.call(pendente, 'visitantesLista')) {
+        resultado.visitantesLista = Array.isArray(pendente.visitantesLista) ? [...pendente.visitantesLista] : [];
+      }
+      if (pendente.visitantesData && typeof pendente.visitantesData === 'object') {
+        resultado.visitantesData = { ...(oficial.visitantesData || {}), ...pendente.visitantesData };
+      }
+      if (pendente.eventoInfo && typeof pendente.eventoInfo === 'object') {
+        resultado.eventoInfo = { ...(oficial.eventoInfo || {}), ...pendente.eventoInfo };
+      }
+
+      // finalizado continua sendo decisão exclusiva do Admin.
+      if (Object.prototype.hasOwnProperty.call(oficial, 'finalizado')) resultado.finalizado = oficial.finalizado;
+      else delete resultado.finalizado;
+      return resultado;
     }
 
     function iniciarSincronizacaoFirebase() {
@@ -1318,17 +1359,24 @@
           salvarCacheAtual();
         });
 
-        // Membro grava em "pendentes". O Admin promove somente cultos ainda inexistentes
-        // no histórico oficial. Assim um registro já consolidado nunca é sobrescrito por membro.
+        // Membro grava alterações parciais em "pendentes". O Admin mescla essas
+        // alterações no registro oficial, inclusive quando o culto já existe.
         unsubPendentes = onValue(ref(db, 'cultos_app/pendentes'), async (snapshot) => {
           const pendentes = snapshot.val() || {};
           for (const [chaveCulto, registroPendente] of Object.entries(pendentes)) {
             try {
               const destino = ref(db, `cultos_app/registros/${chaveCulto}`);
               const existente = await get(destino);
-              if (!existente.exists()) {
-                await set(destino, registroPendente);
+              const registroOficial = existente.exists() ? (existente.val() || {}) : {};
+
+              // Não permite que uma pendência antiga altere culto já finalizado.
+              if (registroOficial.finalizado) {
+                await remove(ref(db, `cultos_app/pendentes/${chaveCulto}`));
+                continue;
               }
+
+              const consolidado = mesclarRegistroPendente(registroOficial, registroPendente);
+              await set(destino, consolidado);
               await remove(ref(db, `cultos_app/pendentes/${chaveCulto}`));
             } catch (erro) {
               console.warn('Não foi possível consolidar o culto pendente.', chaveCulto, erro);
@@ -1340,7 +1388,8 @@
           const atual = snapshot.val() || {};
           window.cultoAtual = atual;
           window.registrosCultos = {};
-          if (atual.chave && atual.registro && atual.data === new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) {
+          const hojeMembro = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+          if (atual.chave && atual.registro && atual.data === hojeMembro && atual.chave.startsWith(`${hojeMembro}_`)) {
             window.registrosCultos[atual.chave] = atual.registro;
             if (atual.tipo) document.getElementById('culto-tipo').value = atual.tipo;
           }
@@ -1371,7 +1420,15 @@
           inputDataCulto.title = '';
         }
         window.registrosCultos = {};
-        carregarDadosLocais();
+        window.cultoAtual = {};
+        if (window.isAdmin || !navigator.onLine) {
+          carregarDadosLocais();
+        } else if (localDB) {
+          // Online, o Membro começa limpo e aguarda o espelho atual do servidor.
+          // Evita mostrar presenças de um culto anterior salvas no IndexedDB.
+          const txCacheMembro = localDB.transaction("appData", "readwrite");
+          txCacheMembro.objectStore("appData").delete("cultos_app_member");
+        }
         iniciarSincronizacaoFirebase();
         window.processarFilaSincronizacao();
         alternarAba('painel');
@@ -1532,14 +1589,16 @@
         if (!window.isAdmin && destino.startsWith('cultos_app/registros/')) {
           destino = destino.replace('cultos_app/registros/', 'cultos_app/pendentes/');
         }
+        const espelhoAtualEfemero = destino === 'cultos_app/atual' || destino.startsWith('cultos_app/atual/');
         if (navigator.onLine && window.dbSet) {
           const operacao = remover
             ? window.dbRemove(window.dbRef(window.db, destino))
             : window.dbSet(window.dbRef(window.db, destino), valorDestino);
           Promise.resolve(operacao).catch(() => {
-            window.adicionarFilaSincronizacao(destino, remover ? 'REMOVE' : 'SET', valorDestino);
+            // O histórico/pendentes podem esperar pela internet; o espelho atual não.
+            if (!espelhoAtualEfemero) window.adicionarFilaSincronizacao(destino, remover ? 'REMOVE' : 'SET', valorDestino);
           });
-        } else {
+        } else if (!espelhoAtualEfemero) {
           window.adicionarFilaSincronizacao(destino, remover ? 'REMOVE' : 'SET', valorDestino);
         }
       };
@@ -1866,7 +1925,7 @@
       if (banner) banner.className = `culto-status-banner ${finalizado ? 'finalizado' : 'andamento'}`;
       if (texto) texto.textContent = finalizado ? '✅ Culto finalizado — chamada protegida' : '⏳ Culto em andamento';
       if (botao) botao.textContent = finalizado ? '🔓 Reabrir culto' : '✅ Finalizar culto';
-      document.querySelectorAll('#tab-chamada input:not(#culto-data), #tab-chamada button:not(#btn-finalizar-culto):not(.calendar-nav-btn):not(.calendar-day), #tab-chamada select:not(#culto-tipo)').forEach(el => {
+      document.querySelectorAll('#tab-chamada input:not(#culto-data), #tab-chamada button:not(#btn-finalizar-culto):not(.calendar-nav-btn):not(.calendar-day):not(.filter-chip), #tab-chamada select:not(#culto-tipo)').forEach(el => {
         el.disabled = !!finalizado;
       });
     }
@@ -2155,7 +2214,7 @@
       const presencas = registroHoje.presencas || {};
       const eventoInfo = registroHoje.eventoInfo || {};
       const finalizado = !!registroHoje.finalizado;
-      let visitantesLista = registroHoje.visitantesLista || [];
+      let visitantesLista = Array.isArray(registroHoje.visitantesLista) ? [...registroHoje.visitantesLista] : [];
       if (visitantesLista.length === 0 && registroHoje.visitantesData?.qtd > 0) {
         for(let i=0; i<registroHoje.visitantesData.qtd; i++) visitantesLista.push("—");
       }
@@ -2748,7 +2807,7 @@
       const eventoInfo = registroHoje.eventoInfo || {};
       const chavesMembros = Object.keys(window.membrosCadastrados);
 
-      let visitantesLista = registroHoje.visitantesLista || [];
+      let visitantesLista = Array.isArray(registroHoje.visitantesLista) ? [...registroHoje.visitantesLista] : [];
       if (visitantesLista.length === 0 && registroHoje.visitantesData?.qtd > 0) {
         for(let i=0; i<registroHoje.visitantesData.qtd; i++) visitantesLista.push("—");
       }
