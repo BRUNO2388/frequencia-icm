@@ -71,16 +71,24 @@ text = text.replace(old_filter, new_filter, 1)
 # 2) Corrige as comparações de "hoje" do Membro para o fuso da igreja.
 # Antes, toISOString() usava UTC e podia virar o dia às 21h no Brasil.
 sp_today = "new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())"
-replacements = {
-    "atual.data === new Date().toISOString().split('T')[0]": f"atual.data === {sp_today}",
-    "inputDataCulto.value = new Date().toISOString().split('T')[0];": f"inputDataCulto.value = {sp_today};",
-    "if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0])": f"if (!window.isAdmin && inputData.value !== {sp_today})",
-}
-for old, new in replacements.items():
-    count = text.count(old)
-    if count != 1:
-        raise SystemExit(f'Trecho de data esperado uma vez, encontrado {count}: {old}')
-    text = text.replace(old, new, 1)
+
+old = "atual.data === new Date().toISOString().split('T')[0]"
+count = text.count(old)
+if count != 1:
+    raise SystemExit(f'Esperada 1 validação de atual.data; encontrada {count}')
+text = text.replace(old, f"atual.data === {sp_today}")
+
+old = "inputDataCulto.value = new Date().toISOString().split('T')[0];"
+count = text.count(old)
+if count != 1:
+    raise SystemExit(f'Esperada 1 definição da data do membro; encontrada {count}')
+text = text.replace(old, f"inputDataCulto.value = {sp_today};")
+
+old = "if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0])"
+count = text.count(old)
+if count != 6:
+    raise SystemExit(f'Esperadas 6 validações de ações do membro; encontradas {count}')
+text = text.replace(old, f"if (!window.isAdmin && inputData.value !== {sp_today})")
 
 if text == original:
     raise SystemExit('Nenhuma alteração aplicada')
