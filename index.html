@@ -984,14 +984,14 @@
       </div>
 
       <div class="filter-chips" id="filtros-chamada">
-        <button class="filter-chip active" data-filter="PRESENTES" onclick="setFiltroChamada('PRESENTES', this)">✅ Presentes</button>
-        <button class="filter-chip" data-filter="Varões" onclick="setFiltroChamada('Varões', this)">Varões</button>
-        <button class="filter-chip" data-filter="Senhoras" onclick="setFiltroChamada('Senhoras', this)">Senhoras</button>
-        <button class="filter-chip" data-filter="Jovens" onclick="setFiltroChamada('Jovens', this)">Jovens</button>
-        <button class="filter-chip" data-filter="Adolescentes" onclick="setFiltroChamada('Adolescentes', this)">Adolescentes</button>
-        <button class="filter-chip" data-filter="Intermediários" onclick="setFiltroChamada('Intermediários', this)">Intermediários</button>
-        <button class="filter-chip" data-filter="Crianças" onclick="setFiltroChamada('Crianças', this)">Crianças</button>
-        <button class="filter-chip" data-filter="Bebês" onclick="setFiltroChamada('Bebês', this)">Bebês</button>
+        <button type="button" class="filter-chip active" data-filter="PRESENTES">✅ Presentes</button>
+        <button type="button" class="filter-chip" data-filter="Varões">Varões</button>
+        <button type="button" class="filter-chip" data-filter="Senhoras">Senhoras</button>
+        <button type="button" class="filter-chip" data-filter="Jovens">Jovens</button>
+        <button type="button" class="filter-chip" data-filter="Adolescentes">Adolescentes</button>
+        <button type="button" class="filter-chip" data-filter="Intermediários">Intermediários</button>
+        <button type="button" class="filter-chip" data-filter="Crianças">Crianças</button>
+        <button type="button" class="filter-chip" data-filter="Bebês">Bebês</button>
       </div>
       
       <div style="display:flex; justify-content:space-between; margin-bottom:12px; gap: 6px;">
@@ -1320,7 +1320,7 @@
           const atual = snapshot.val() || {};
           window.cultoAtual = atual;
           window.registrosCultos = {};
-          if (atual.chave && atual.registro && atual.data === new Date().toISOString().split('T')[0]) {
+          if (atual.chave && atual.registro && atual.data === new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) {
             window.registrosCultos[atual.chave] = atual.registro;
             if (atual.tipo) document.getElementById('culto-tipo').value = atual.tipo;
           }
@@ -1343,7 +1343,7 @@
         document.getElementById('user-info').textContent = window.isAdmin ? '👑 Administrador' : '👤 Membro';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('admin-visible', window.isAdmin));
         if (!window.isAdmin) {
-          inputDataCulto.value = new Date().toISOString().split('T')[0];
+          inputDataCulto.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
           inputDataCulto.disabled = true;
           inputDataCulto.title = 'Membros registram apenas o culto do dia atual.';
         } else {
@@ -1855,11 +1855,45 @@
     }
 
     function setFiltroChamada(filtro, botao) {
+      const filtrosValidos = ['PRESENTES', ...CATEGORIAS];
+      if (!filtrosValidos.includes(filtro)) return;
+
       window.filtroChamadaAtual = filtro;
       document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
       if (botao) botao.classList.add('active');
+
+      // Ao navegar por categoria, fecha qualquer resultado da busca por nome
+      // para que a lista da classe fique totalmente visível.
+      const busca = document.getElementById('busca-membro');
+      const resultados = document.getElementById('search-results-box');
+      if (busca) busca.value = '';
+      if (resultados) {
+        resultados.innerHTML = '';
+        resultados.style.display = 'none';
+      }
+
       carregarChamadaCulto();
     }
+
+    // Expõe explicitamente a função usada pela interface, inclusive para
+    // sessões autenticadas como Membro.
+    window.setFiltroChamada = setFiltroChamada;
+
+    function prepararFiltrosChamada() {
+      const filtros = document.getElementById('filtros-chamada');
+      if (!filtros || filtros.dataset.filtrosV12 === '1') return;
+      filtros.dataset.filtrosV12 = '1';
+
+      filtros.addEventListener('click', (event) => {
+        const botao = event.target.closest('.filter-chip');
+        if (!botao || !filtros.contains(botao)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setFiltroChamada(botao.dataset.filter || '', botao);
+      });
+    }
+
+    prepararFiltrosChamada();
 
     function sincronizarMesCalendario() {
       if (!inputData.value) return;
@@ -1948,7 +1982,7 @@
 
     function alternarStatusMembro(membroId) {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1963,7 +1997,7 @@
 
     function adicionarPresencaRapida(membroId) {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) window.registrosCultos[chaveCulto] = { presencas: {} };
       if (!window.registrosCultos[chaveCulto].presencas) window.registrosCultos[chaveCulto].presencas = {};
@@ -1977,7 +2011,7 @@
 
     function marcarTodos(status) {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const chavesMembros = Object.keys(window.membrosCadastrados);
       const objetoPresencas = {};
@@ -1990,7 +2024,7 @@
 
     function adicionarVisitante() {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const input = document.getElementById('input-nome-visitante');
       let nome = input.value.trim();
       if (!nome) nome = "—";
@@ -2006,7 +2040,7 @@
 
     function removerVisitante(index) {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       if (!window.registrosCultos[chaveCulto]) return;
       let listaVisitantes = window.registrosCultos[chaveCulto].visitantesLista || [];
@@ -2018,7 +2052,7 @@
 
     function salvarCamposEvento() {
       if (bloquearSeFinalizado()) return;
-      if (!window.isAdmin && inputData.value !== new Date().toISOString().split('T')[0]) { alert('Membros só podem alterar o culto de hoje.'); return; }
+      if (!window.isAdmin && inputData.value !== new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())) { alert('Membros só podem alterar o culto de hoje.'); return; }
       const chaveCulto = getChaveCulto();
       const louvor = document.getElementById('culto-louvor').value;
       const palavra = document.getElementById('culto-palavra').value;
