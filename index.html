@@ -1293,6 +1293,26 @@
       if (window.isAdmin) {
         unsubRegistros = onValue(ref(db, 'cultos_app/registros'), (snapshot) => {
           window.registrosCultos = snapshot.val() || {};
+
+          // O modo Membro lê cultos_app/atual. Sempre que o Admin carregar o
+          // registro oficial do culto selecionado de hoje, publica um retrato
+          // completo dele para eliminar dados antigos ou parciais do espelho.
+          const hojeLocal = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+          const dataSelecionada = document.getElementById('culto-data')?.value || '';
+          const tipoSelecionado = document.getElementById('culto-tipo')?.value || '';
+          if (dataSelecionada === hojeLocal && tipoSelecionado) {
+            const chaveAtual = `${dataSelecionada}_${tipoSelecionado.replace(/\s+/g, '_')}`;
+            const registroAtual = window.registrosCultos[chaveAtual];
+            if (registroAtual) {
+              set(ref(db, 'cultos_app/atual'), {
+                chave: chaveAtual,
+                data: hojeLocal,
+                tipo: tipoSelecionado,
+                registro: registroAtual
+              }).catch((erro) => console.warn('Não foi possível atualizar o espelho do culto atual.', erro));
+            }
+          }
+
           carregarChamadaCulto();
           gerarRelatorioMensal();
           salvarCacheAtual();
@@ -1482,9 +1502,10 @@
 
     const inputData = document.getElementById('culto-data');
     const hoje = new Date();
+    const hojeISOIgreja = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(hoje);
     window.mesCalendario = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    inputData.value = hoje.toISOString().split('T')[0];
-    document.getElementById('filtro-mes-ano').value = hoje.toISOString().slice(0, 7);
+    inputData.value = hojeISOIgreja;
+    document.getElementById('filtro-mes-ano').value = hojeISOIgreja.slice(0, 7);
 
     function verificarDiaDaSemana() {
       const dataStr = inputData.value;
@@ -1535,20 +1556,35 @@
         if (partes[1] === 'registros' && partes[2]) {
           const chaveCulto = partes[2];
           const dataCulto = chaveCulto.split('_')[0];
-          const hojeISO = new Date().toISOString().split('T')[0];
+          const hojeISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
           if (dataCulto === hojeISO) {
             const restante = partes.slice(3).join('/');
             const tipoCulto = document.getElementById('culto-tipo').value;
-            gravarOuEnfileirar('cultos_app/atual/chave', chaveCulto, false);
-            gravarOuEnfileirar('cultos_app/atual/data', hojeISO, false);
-            gravarOuEnfileirar('cultos_app/atual/tipo', tipoCulto, false);
-            if (restante) gravarOuEnfileirar(`cultos_app/atual/registro/${restante}`, valor, isRemove);
-            else gravarOuEnfileirar('cultos_app/atual/registro', valor, isRemove);
+            const registroCompleto = window.registrosCultos[chaveCulto] || {};
+
+            if (window.isAdmin) {
+              // Admin é a fonte oficial: substitui o espelho inteiro para não
+              // deixar presenças/visitantes de um culto anterior misturados.
+              gravarOuEnfileirar('cultos_app/atual', {
+                chave: chaveCulto,
+                data: hojeISO,
+                tipo: tipoCulto,
+                registro: registroCompleto
+              }, false);
+            } else {
+              // Membro altera somente o campo necessário no espelho atual.
+              gravarOuEnfileirar('cultos_app/atual/chave', chaveCulto, false);
+              gravarOuEnfileirar('cultos_app/atual/data', hojeISO, false);
+              gravarOuEnfileirar('cultos_app/atual/tipo', tipoCulto, false);
+              if (restante) gravarOuEnfileirar(`cultos_app/atual/registro/${restante}`, valor, isRemove);
+              else gravarOuEnfileirar('cultos_app/atual/registro', valor, isRemove);
+            }
+
             window.cultoAtual = {
               chave: chaveCulto,
               data: hojeISO,
               tipo: tipoCulto,
-              registro: window.registrosCultos[chaveCulto] || {}
+              registro: registroCompleto
             };
           }
         }
