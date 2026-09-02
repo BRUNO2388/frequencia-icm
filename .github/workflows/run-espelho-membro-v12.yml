@@ -1,0 +1,57 @@
+name: Run Espelho Membro V12
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/run-espelho-membro-v12.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: corrige-espelho-membro-v12
+          fetch-depth: 0
+
+      - name: Aplicar correção
+        run: python tools/patch_espelho_membro_v12.py
+
+      - name: Validar alteração
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "index.html"
+          grep -q "publicarEspelhoCultoSelecionado" index.html
+          grep -q "registroAtual = window.registrosCultos\[chaveAtual\] || {}" index.html
+          grep -q "mesmoCultoNoEspelho" index.html
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          assert "window.publicarEspelhoCultoSelecionado();" in s
+          assert "registro: registroAtual" in s
+          assert "const mesmoCultoNoEspelho" in s
+          PY
+          node - <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const classic = /<script(?![^>]*\bsrc=)(?![^>]*\btype=["']module["'])[^>]*>([\s\S]*?)<\/script>/gi;
+          let m, count = 0;
+          while ((m = classic.exec(html))) { count++; new Function(m[1]); }
+          if (!count) throw new Error('Nenhum script clássico encontrado');
+          const moduleRe = /<script[^>]*\btype=["']module["'][^>]*>([\s\S]*?)<\/script>/gi;
+          while ((m = moduleRe.exec(html))) {
+            const cleaned = m[1].replace(/^\s*import\s+.*?;\s*$/gm, '');
+            new Function(cleaned);
+          }
+          NODE
+
+      - name: Commit e push na branch de teste
+        run: |
+          git config user.name 'github-actions-bot'
+          git config user.email 'github-actions-bot@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Corrige espelho vazio do culto para perfil membro'
+          git push origin HEAD:corrige-espelho-membro-v12
