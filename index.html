@@ -1320,6 +1320,27 @@
       return resultado;
     }
 
+    window.publicarEspelhoCultoSelecionado = function publicarEspelhoCultoSelecionado() {
+      if (!window.isAdmin) return;
+      const hojeLocal = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+      const dataSelecionada = document.getElementById('culto-data')?.value || '';
+      const tipoSelecionado = document.getElementById('culto-tipo')?.value || '';
+      if (dataSelecionada !== hojeLocal || !tipoSelecionado) return;
+
+      const chaveAtual = `${dataSelecionada}_${tipoSelecionado.replace(/\s+/g, '_')}`;
+      const registroAtual = window.registrosCultos[chaveAtual] || {};
+      const espelho = {
+        chave: chaveAtual,
+        data: hojeLocal,
+        tipo: tipoSelecionado,
+        registro: registroAtual
+      };
+
+      window.cultoAtual = espelho;
+      set(ref(db, 'cultos_app/atual'), espelho)
+        .catch((erro) => console.warn('Não foi possível atualizar o espelho do culto atual.', erro));
+    };
+
     function iniciarSincronizacaoFirebase() {
       if (unsubMembros || unsubAtual || unsubRegistros) return;
 
@@ -1335,24 +1356,10 @@
         unsubRegistros = onValue(ref(db, 'cultos_app/registros'), (snapshot) => {
           window.registrosCultos = snapshot.val() || {};
 
-          // O modo Membro lê cultos_app/atual. Sempre que o Admin carregar o
-          // registro oficial do culto selecionado de hoje, publica um retrato
-          // completo dele para eliminar dados antigos ou parciais do espelho.
-          const hojeLocal = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
-          const dataSelecionada = document.getElementById('culto-data')?.value || '';
-          const tipoSelecionado = document.getElementById('culto-tipo')?.value || '';
-          if (dataSelecionada === hojeLocal && tipoSelecionado) {
-            const chaveAtual = `${dataSelecionada}_${tipoSelecionado.replace(/\s+/g, '_')}`;
-            const registroAtual = window.registrosCultos[chaveAtual];
-            if (registroAtual) {
-              set(ref(db, 'cultos_app/atual'), {
-                chave: chaveAtual,
-                data: hojeLocal,
-                tipo: tipoSelecionado,
-                registro: registroAtual
-              }).catch((erro) => console.warn('Não foi possível atualizar o espelho do culto atual.', erro));
-            }
-          }
+          // Publica sempre o culto selecionado de hoje, mesmo quando ainda não
+          // existe registro. Nesse caso o Membro recebe um espelho vazio (0/0/0)
+          // em vez de continuar vendo o último culto finalizado.
+          window.publicarEspelhoCultoSelecionado();
 
           carregarChamadaCulto();
           gerarRelatorioMensal();
@@ -1631,12 +1638,24 @@
                 registro: registroCompleto
               }, false);
             } else {
-              // Membro altera somente o campo necessário no espelho atual.
-              gravarOuEnfileirar('cultos_app/atual/chave', chaveCulto, false);
-              gravarOuEnfileirar('cultos_app/atual/data', hojeISO, false);
-              gravarOuEnfileirar('cultos_app/atual/tipo', tipoCulto, false);
-              if (restante) gravarOuEnfileirar(`cultos_app/atual/registro/${restante}`, valor, isRemove);
-              else gravarOuEnfileirar('cultos_app/atual/registro', valor, isRemove);
+              // Se o Membro estiver mudando para outro culto do mesmo dia, substitui
+              // o espelho inteiro antes da primeira alteração. Isso impede que campos
+              // do culto anterior (presenças, visitantes ou finalizado) sejam herdados.
+              const mesmoCultoNoEspelho = window.cultoAtual?.chave === chaveCulto && window.cultoAtual?.data === hojeISO;
+              if (!mesmoCultoNoEspelho) {
+                gravarOuEnfileirar('cultos_app/atual', {
+                  chave: chaveCulto,
+                  data: hojeISO,
+                  tipo: tipoCulto,
+                  registro: registroCompleto
+                }, false);
+              } else {
+                gravarOuEnfileirar('cultos_app/atual/chave', chaveCulto, false);
+                gravarOuEnfileirar('cultos_app/atual/data', hojeISO, false);
+                gravarOuEnfileirar('cultos_app/atual/tipo', tipoCulto, false);
+                if (restante) gravarOuEnfileirar(`cultos_app/atual/registro/${restante}`, valor, isRemove);
+                else gravarOuEnfileirar('cultos_app/atual/registro', valor, isRemove);
+              }
             }
 
             window.cultoAtual = {
@@ -2210,6 +2229,9 @@
 
     function carregarChamadaCulto() {
       const chaveCulto = getChaveCulto();
+      if (window.isAdmin && typeof window.publicarEspelhoCultoSelecionado === 'function') {
+        window.publicarEspelhoCultoSelecionado();
+      }
       const registroHoje = window.registrosCultos[chaveCulto] || {};
       const presencas = registroHoje.presencas || {};
       const eventoInfo = registroHoje.eventoInfo || {};
