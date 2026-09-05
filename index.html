@@ -1220,7 +1220,13 @@
     window.adicionarFilaSincronizacao = function(caminho, acao, valor) {
       if (!localDB) return;
       const tx = localDB.transaction("syncQueue", "readwrite");
-      tx.objectStore("syncQueue").add({ caminho, acao, valor, timestamp: Date.now() });
+      tx.objectStore("syncQueue").add({
+        caminho,
+        acao,
+        valor,
+        timestamp: Date.now(),
+        origem: window.isAdmin ? 'admin' : 'membro'
+      });
       atualizarStatusConexaoUI();
     };
 
@@ -1250,16 +1256,27 @@
 
             const exigeAdmin = item.caminho.startsWith('cultos_app/membros/') || item.caminho.startsWith('cultos_app/config/');
             if (exigeAdmin && !window.isAdmin) continue;
+
             let caminhoEfetivo = item.caminho;
-            if (!window.isAdmin && caminhoEfetivo.startsWith('cultos_app/registros/')) {
-              const hojeMembro = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
-              const cultoIdFila = caminhoEfetivo.split('/')[2] || '';
-              if (!cultoIdFila.startsWith(`${hojeMembro}_`)) {
-                const txDeleteAntigo = localDB.transaction("syncQueue", "readwrite");
-                txDeleteAntigo.objectStore("syncQueue").delete(chave);
-                continue;
+            const origemItem = item.origem || 'membro';
+
+            if (caminhoEfetivo.startsWith('cultos_app/registros/')) {
+              if (origemItem === 'admin') {
+                // Alterações offline feitas pelo Admin só podem ir ao histórico oficial
+                // quando um Admin estiver autenticado novamente.
+                if (!window.isAdmin) continue;
+              } else {
+                // Alterações offline feitas pelo Membro nunca viram gravação direta no
+                // histórico oficial, mesmo se quem processar a fila depois for um Admin.
+                const hojeMembro = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+                const cultoIdFila = caminhoEfetivo.split('/')[2] || '';
+                if (!cultoIdFila.startsWith(`${hojeMembro}_`)) {
+                  const txDeleteAntigo = localDB.transaction("syncQueue", "readwrite");
+                  txDeleteAntigo.objectStore("syncQueue").delete(chave);
+                  continue;
+                }
+                caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
               }
-              caminhoEfetivo = caminhoEfetivo.replace('cultos_app/registros/', 'cultos_app/pendentes/');
             }
             try {
               if (item.acao === 'SET') await set(ref(db, caminhoEfetivo), item.valor);
@@ -1393,13 +1410,29 @@
       } else {
         unsubAtual = onValue(ref(db, 'cultos_app/atual'), (snapshot) => {
           const atual = snapshot.val() || {};
-          window.cultoAtual = atual;
-          window.registrosCultos = {};
           const hojeMembro = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
-          if (atual.chave && atual.registro && atual.data === hojeMembro && atual.chave.startsWith(`${hojeMembro}_`)) {
-            window.registrosCultos[atual.chave] = atual.registro;
+          const espelhoValido = !!(
+            atual.chave &&
+            atual.data === hojeMembro &&
+            atual.chave.startsWith(`${hojeMembro}_`)
+          );
+
+          window.registrosCultos = {};
+
+          if (espelhoValido) {
+            // Firebase pode omitir "registro" quando ele é um objeto vazio.
+            // Ainda assim o culto de hoje é válido e deve aparecer zerado.
+            const registroAtual = atual.registro && typeof atual.registro === 'object'
+              ? atual.registro
+              : {};
+            window.cultoAtual = { ...atual, registro: registroAtual };
+            window.registrosCultos[atual.chave] = registroAtual;
             if (atual.tipo) document.getElementById('culto-tipo').value = atual.tipo;
+          } else {
+            // Nunca mantém como fallback um culto antigo ou inválido.
+            window.cultoAtual = {};
           }
+
           carregarChamadaCulto();
           salvarCacheAtual();
         });
@@ -2049,7 +2082,7 @@
       titulo.textContent = base.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
       const primeiroDia = new Date(ano, mes, 1).getDay();
       const totalDias = new Date(ano, mes + 1, 0).getDate();
-      const hojeISO = new Date().toISOString().split('T')[0];
+      const hojeISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
       let html = '';
       for (let i = 0; i < primeiroDia; i++) html += '<button class="calendar-day empty" tabindex="-1"></button>';
       for (let dia = 1; dia <= totalDias; dia++) {
@@ -2067,7 +2100,12 @@
       const titulo = document.getElementById('dash-culto-titulo');
       if (!titulo) return;
       const chave = getChaveCulto();
-      const registro = window.registrosCultos[chave] || window.cultoAtual?.registro || {};
+      const espelhoDoCultoSelecionado = !!(
+        window.cultoAtual?.chave === chave &&
+        window.cultoAtual?.data === inputData.value
+      );
+      const registro = window.registrosCultos[chave]
+        || (espelhoDoCultoSelecionado ? (window.cultoAtual?.registro || {}) : {});
       const presencas = registro.presencas || {};
       const membros = Object.values(presencas).filter(v => v === 'presente').length;
       const visitantes = (registro.visitantesLista || []).length || (registro.visitantesData?.qtd || 0);
@@ -2334,7 +2372,12 @@
         `;
       }
 
-      if (totalP === 0 && visitantesLista.length === 0) divPresenca.innerHTML = '<p style="text-align:center; color:#888; padding: 15px;">Nenhum membro ou visitante marcado como presente ainda.</p>';
+      const filtroListaAtual = window.filtroChamadaAtual || 'PRESENTES';
+      if (filtroListaAtual === 'PRESENTES' && totalP === 0) {
+        divPresenca.innerHTML = '<p style="text-align:center; color:#888; padding: 15px;">Nenhum membro marcado como presente ainda.</p>';
+      } else if (filtroListaAtual !== 'PRESENTES' && !divPresenca.innerHTML.trim()) {
+        divPresenca.innerHTML = `<p style="text-align:center; color:#888; padding:15px;">Nenhum membro cadastrado em ${escapeHTML(filtroListaAtual)}.</p>`;
+      }
 
       const totalGeralPresentes = totalP + visitantesLista.length;
       const elemContador = document.getElementById('floating-presenca-count');
