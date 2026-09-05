@@ -749,6 +749,18 @@
   .filter-chips { display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:thin; }
   .filter-chip { flex:0 0 auto; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-main); border-radius:18px; padding:6px 11px; font-size:.75rem; font-weight:800; cursor:pointer; }
   .filter-chip.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+  @media (max-width: 600px) {
+    .filter-chips {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      align-items: center;
+    }
+    .filter-chip {
+      flex: 0 0 auto;
+    }
+  }
+
   .status-badge-btn.ausente { background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border); }
   .member-select-item { transition:transform .15s ease, box-shadow .15s ease; }
   .member-select-item:hover { transform:translateY(-1px); box-shadow:0 3px 10px var(--shadow); }
