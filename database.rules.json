@@ -1,12 +1,20 @@
 {
   "rules": {
     "registros_louvor": {
-      ".read": false,
-      ".write": false
+      ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
+      ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
+      "$data": {
+        "$pessoa": {
+          ".validate": "!newData.exists() || (newData.hasChildren(['nome','status']) && newData.child('nome').isString() && newData.child('nome').val().length > 0 && newData.child('nome').val().length <= 120 && (newData.child('status').val() == 'presente' || newData.child('status').val() == 'atrasado' || newData.child('status').val() == 'ausente'))"
+        }
+      }
     },
     "membros_louvor": {
-      ".read": false,
-      ".write": false
+      ".read": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
+      ".write": "auth != null && auth.token.email == 'icmpinhos@gmail.com'",
+      "$membro": {
+        ".validate": "!newData.exists() || (newData.hasChild('nome') && newData.child('nome').isString() && newData.child('nome').val().length > 0 && newData.child('nome').val().length <= 120)"
+      }
     },
     "cultos_app": {
       "membros": {
