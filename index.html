@@ -732,6 +732,12 @@
   .gl-history-table td, .gl-history-table th { text-align:center; }
   .gl-muted { padding:12px; text-align:center; color:var(--text-secondary); font-size:.78rem; }
   .gl-access-note { margin-bottom:12px; padding:10px 12px; border-radius:10px; background:var(--danger-bg); border:1px solid var(--danger-border); color:var(--danger-text); font-size:.78rem; line-height:1.4; }
+  .gl-subnav { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:0 0 12px; padding:5px; border:1px solid var(--border-color); border-radius:12px; background:var(--card-bg); }
+  .gl-subtab-btn { border:1px solid transparent; background:transparent; color:var(--text-secondary); border-radius:9px; padding:9px 7px; font-size:.76rem; font-weight:900; cursor:pointer; transition:all .18s ease; }
+  .gl-subtab-btn:hover { border-color:var(--border-color); color:var(--text-main); background:var(--bg-container); }
+  .gl-subtab-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 2px 8px var(--shadow); }
+  .gl-view { display:none; }
+  .gl-view.active { display:block; }
 
   @media (max-width: 600px) {
     .gl-hero { grid-template-columns:1fr; padding:14px; }
@@ -1106,7 +1112,7 @@
         <div>
           <small>MÓDULO ADMINISTRATIVO</small>
           <h2>🎵 Grupo de Louvor</h2>
-          <p>Chamada, integrantes e histórico do GL no mesmo aplicativo. O módulo usa o cadastro e os registros já existentes do app Louvor.</p>
+          <p>Frequência e gestão do Grupo de Louvor.</p>
         </div>
         <div class="gl-kpis">
           <div class="gl-kpi"><strong id="gl-kpi-integrantes">0</strong><span>Integrantes</span></div>
@@ -1117,6 +1123,13 @@
 
       <div id="gl-aviso-acesso" class="gl-access-note" hidden></div>
 
+      <div class="gl-subnav" role="tablist" aria-label="Áreas do Grupo de Louvor">
+        <button type="button" class="gl-subtab-btn active" data-gl-view="chamada" onclick="glAlternarTela('chamada')">📝 Chamada</button>
+        <button type="button" class="gl-subtab-btn" data-gl-view="integrantes" onclick="glAlternarTela('integrantes')">👥 Integrantes</button>
+        <button type="button" class="gl-subtab-btn" data-gl-view="historico" onclick="glAlternarTela('historico')">📊 Histórico</button>
+      </div>
+
+      <div id="gl-view-chamada" class="gl-view active">
       <section class="gl-section">
         <div class="gl-section-head">
           <div>
@@ -1140,7 +1153,9 @@
         <button type="button" id="gl-btn-salvar" class="btn-main gl-save-btn" onclick="glSalvarChamada()">💾 Salvar chamada do GL</button>
         <div id="gl-msg" class="gl-message" aria-live="polite"></div>
       </section>
+      </div>
 
+      <div id="gl-view-integrantes" class="gl-view">
       <section class="gl-section">
         <div class="gl-section-head">
           <div>
@@ -1159,7 +1174,9 @@
           <div class="gl-muted">Carregando cadastro existente...</div>
         </div>
       </section>
+      </div>
 
+      <div id="gl-view-historico" class="gl-view">
       <section class="gl-section">
         <div class="gl-section-head">
           <div>
@@ -1183,6 +1200,7 @@
           </table>
         </div>
       </section>
+      </div>
     </div>
 
     <!-- ABA 3: RELATÓRIO MENSAL -->
@@ -2016,7 +2034,10 @@
       if (nomeAba === 'mensal') gerarRelatorioMensal();
       if (nomeAba === 'painel') atualizarDashboard();
       if (nomeAba === 'chamada' && window.isAdmin) renderizarCalendarioAdmin();
-      if (nomeAba === 'louvor' && window.isAdmin) glRenderTudo();
+      if (nomeAba === 'louvor' && window.isAdmin) {
+        glAlternarTela('chamada');
+        glRenderTudo();
+      }
     }
 
     function alterarSenhaAdministrador() {
@@ -2994,6 +3015,24 @@
         .sort((a, b) => String(a[1].nome).localeCompare(String(b[1].nome), 'pt-BR'));
     }
 
+    function glAlternarTela(nome) {
+      if (!window.isAdmin) return;
+      const telas = ['chamada', 'integrantes', 'historico'];
+      if (!telas.includes(nome)) nome = 'chamada';
+
+      document.querySelectorAll('#tab-louvor .gl-subtab-btn').forEach(botao => {
+        botao.classList.toggle('active', botao.dataset.glView === nome);
+      });
+      document.querySelectorAll('#tab-louvor .gl-view').forEach(tela => {
+        tela.classList.toggle('active', tela.id === `gl-view-${nome}`);
+      });
+
+      if (nome === 'chamada') glRenderChamada();
+      else if (nome === 'integrantes') glRenderIntegrantes();
+      else if (nome === 'historico') glRenderHistorico();
+    }
+    window.glAlternarTela = glAlternarTela;
+
     function iniciarGrupoLouvorAdmin() {
       if (!window.isAdmin || !window.db || !window.dbRef || !window.dbOnValue) return;
       pararGrupoLouvorAdmin();
@@ -3336,6 +3375,7 @@
       const input = document.getElementById('gl-data');
       if (input) input.value = data;
       glMontarRascunho();
+      glAlternarTela('chamada');
       document.getElementById('gl-data')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
