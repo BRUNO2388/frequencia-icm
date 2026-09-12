@@ -1131,7 +1131,7 @@
 
         <div class="gl-bulk-actions">
           <button type="button" class="btn-small-sec" onclick="glMarcarTodos('presente')">✅ Todos presentes</button>
-          <button type="button" class="btn-small-sec" onclick="glLimparMarcacoes()">🔄 Limpar marcações</button>
+          <button type="button" class="btn-small-sec" onclick="glLimparMarcacoes()">🗑️ Limpar chamada</button>
         </div>
         <div id="gl-progresso" class="gl-progress">0/0 marcados</div>
         <div id="gl-lista-chamada" class="gl-call-list">
@@ -3162,14 +3162,37 @@
       glRenderChamada();
     }
 
-    function glLimparMarcacoes() {
+    async function glLimparMarcacoes() {
       if (!window.isAdmin) return;
+      const data = document.getElementById('gl-data')?.value || '';
+      if (!data) return alert('Selecione a data da chamada.');
+
+      const temChamadaSalva = !!(window.glRegistros && window.glRegistros[data]);
+      if (temChamadaSalva) {
+        const confirmar = confirm(`Apagar a chamada do Grupo de Louvor de ${glFormatarData(data)}?\n\nEsta ação removerá a chamada salva desta data, mas não apagará os integrantes cadastrados.`);
+        if (!confirmar) return;
+        try {
+          await window.dbRemove(window.dbRef(window.db, `registros_louvor/${data}`));
+          delete window.glRegistros[data];
+          glMontarRascunho();
+          glMostrarMensagem(`✅ Chamada de ${glFormatarData(data)} apagada.`);
+          glAtualizarKpis();
+          glRenderHistorico();
+          return;
+        } catch (erro) {
+          console.error(erro);
+          glMostrarMensagem('Não foi possível apagar a chamada. Verifique a conexão e as permissões do Firebase.', true);
+          return;
+        }
+      }
+
       Object.values(glRascunho).forEach(item => {
         item.status = '';
         item.justificado = 'nao';
         item.motivo = '';
       });
       glRenderChamada();
+      glMostrarMensagem('Marcações não salvas foram limpas.');
     }
 
     async function glSalvarChamada() {
