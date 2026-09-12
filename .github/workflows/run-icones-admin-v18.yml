@@ -1,0 +1,52 @@
+name: Run Icones Admin V18
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-icones-admin-v18.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: icones-admin-v18
+          fetch-depth: 0
+
+      - name: Aplicar ajuste dos ícones admin
+        run: python tools/patch_icones_admin_v18.py
+
+      - name: Validar alteração
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "index.html"
+          grep -q '📊 Relatório Mensal' index.html
+          grep -q '👥 Cadastrar Membros' index.html
+          ! grep -q '🔒 Relatório Mensal' index.html
+          ! grep -q '🔒 Cadastrar Membros' index.html
+          node - <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const classic = /<script(?![^>]*\bsrc=)(?![^>]*\btype=["']module["'])[^>]*>([\s\S]*?)<\/script>/gi;
+          let m, count = 0;
+          while ((m = classic.exec(html))) { count++; new Function(m[1]); }
+          if (!count) throw new Error('Nenhum script clássico encontrado');
+          const moduleRe = /<script[^>]*\btype=["']module["'][^>]*>([\s\S]*?)<\/script>/gi;
+          while ((m = moduleRe.exec(html))) {
+            const cleaned = m[1].replace(/^\s*import\s+.*?;\s*$/gm, '');
+            new Function(cleaned);
+          }
+          NODE
+
+      - name: Commit e push na branch de teste
+        run: |
+          git config user.name 'github-actions-bot'
+          git config user.email 'github-actions-bot@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Remove cadeados das abas administrativas'
+          git push origin HEAD:icones-admin-v18
