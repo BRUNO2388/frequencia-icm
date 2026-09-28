@@ -1190,7 +1190,7 @@
         </div>
         <div id="gl-resumo-historico" class="gl-history-summary"></div>
         <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0;">
-          <button type="button" class="btn-main btn-wsp" onclick="glEnviarRelatorioMensalWhatsApp()">💬 Enviar relatório completo no WhatsApp</button>
+          <button type="button" class="btn-main btn-img" onclick="glEnviarRelatorioMensalImagem()">📸 Compartilhar imagem no WhatsApp</button>
           <button type="button" class="btn-main btn-pdf" onclick="glEnviarRelatorioMensalPDF()">📄 Enviar relatório mensal em PDF</button>
         </div>
         <div id="gl-folha-mensal" class="paper-sheet" style="margin:16px 0;"></div>
@@ -3417,19 +3417,12 @@
       folha.innerHTML = html + '</tbody></table></div>';
     }
 
-    function glEnviarRelatorioMensalWhatsApp() {
+    function glEnviarRelatorioMensalImagem() {
       if (!window.isAdmin) return;
-      const { nomeMes, datas, integrantes } = glDadosRelatorioMensal();
+      const { mes, datas } = glDadosRelatorioMensal();
       if (!datas.length) return alert('Nenhuma chamada salva neste mês.');
-      const linhas = [`*🎵 GRUPO DE LOUVOR — RELATÓRIO MENSAL*`, `*ICM Pinhos • ${nomeMes}*`, `*Chamadas:* ${datas.length}`, ''];
-      integrantes.forEach(([id, nome]) => {
-        const itens = datas.map(data => ({ data, item: window.glRegistros[data]?.[id] }));
-        const total = status => itens.filter(({ item }) => item?.status === status).length;
-        linhas.push(`*${nome}* — ${total('presente')} presente(s), ${total('atrasado')} atraso(s), ${total('ausente')} falta(s)`);
-        itens.forEach(({ data, item }) => linhas.push(`• ${glFormatarData(data)}: ${glStatusRelatorio(item)}`));
-        linhas.push('');
-      });
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(linhas.join('\n'))}`, '_blank');
+      glRenderRelatorioMensal();
+      gerarECompartilharImagem('gl-folha-mensal', `Grupo_de_Louvor_${mes}`);
     }
 
     function glEnviarRelatorioMensalPDF() {
