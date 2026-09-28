@@ -1189,6 +1189,11 @@
           </div>
         </div>
         <div id="gl-resumo-historico" class="gl-history-summary"></div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0;">
+          <button type="button" class="btn-main btn-wsp" onclick="glEnviarRelatorioMensalWhatsApp()">💬 Enviar relatório completo no WhatsApp</button>
+          <button type="button" class="btn-main btn-pdf" onclick="glEnviarRelatorioMensalPDF()">📄 Enviar relatório mensal em PDF</button>
+        </div>
+        <div id="gl-folha-mensal" class="paper-sheet" style="margin:16px 0;"></div>
         <div class="table-responsive">
           <table class="report-table gl-history-table">
             <thead>
@@ -3368,6 +3373,71 @@
         <div class="gl-history-card"><strong>${somaPresentes + somaAtrasados}</strong><span>Participações</span></div>
         <div class="gl-history-card"><strong>${somaAusentes}</strong><span>Ausências</span></div>`;
       glAtualizarKpis();
+      glRenderRelatorioMensal();
+    }
+
+    function glDadosRelatorioMensal() {
+      const mes = document.getElementById('gl-mes')?.value || glHojeISO().slice(0, 7);
+      const datas = Object.keys(window.glRegistros || {}).filter(data => data.startsWith(mes)).sort();
+      const nomes = new Map(glListaIntegrantes().map(([id, item]) => [id, item.nome]));
+      datas.forEach(data => Object.entries(window.glRegistros[data] || {}).forEach(([id, item]) => {
+        if (!nomes.has(id) && item?.nome) nomes.set(id, item.nome);
+      }));
+      const integrantes = [...nomes].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'));
+      const nomeMes = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+        .format(new Date(`${mes}-01T12:00:00Z`));
+      return { mes, nomeMes, datas, integrantes };
+    }
+
+    function glStatusRelatorio(item) {
+      if (!item?.status) return '—';
+      const legenda = { presente: 'Presente', atrasado: 'Atrasado', ausente: 'Ausente' };
+      const status = legenda[item.status] || item.status;
+      if (item.status === 'presente') return status;
+      const justificativa = item.justificado === 'sim' ? 'justificado' : 'não justificado';
+      return `${status} (${justificativa}${item.motivo ? `: ${item.motivo}` : ''})`;
+    }
+
+    function glRenderRelatorioMensal() {
+      const folha = document.getElementById('gl-folha-mensal');
+      if (!folha) return;
+      const { nomeMes, datas, integrantes } = glDadosRelatorioMensal();
+      let html = `<div class="paper-title">GRUPO DE LOUVOR — RELATÓRIO MENSAL</div><p><strong>ICM Pinhos • ${escapeHTML(nomeMes)} • ${datas.length} chamada(s)</strong></p>`;
+      if (!datas.length) {
+        folha.innerHTML = html + '<p>Nenhuma chamada salva neste mês.</p>';
+        return;
+      }
+      html += '<div class="table-responsive"><table class="report-table"><thead><tr><th>Integrante</th><th>Presentes</th><th>Atrasos</th><th>Faltas</th><th>Por data</th></tr></thead><tbody>';
+      integrantes.forEach(([id, nome]) => {
+        const itens = datas.map(data => ({ data, item: window.glRegistros[data]?.[id] }));
+        const total = status => itens.filter(({ item }) => item?.status === status).length;
+        const detalhes = itens.map(({ data, item }) => `<div><strong>${glFormatarData(data)}:</strong> ${escapeHTML(glStatusRelatorio(item))}</div>`).join('');
+        html += `<tr><td>${escapeHTML(nome)}</td><td>${total('presente')}</td><td>${total('atrasado')}</td><td>${total('ausente')}</td><td>${detalhes}</td></tr>`;
+      });
+      folha.innerHTML = html + '</tbody></table></div>';
+    }
+
+    function glEnviarRelatorioMensalWhatsApp() {
+      if (!window.isAdmin) return;
+      const { nomeMes, datas, integrantes } = glDadosRelatorioMensal();
+      if (!datas.length) return alert('Nenhuma chamada salva neste mês.');
+      const linhas = [`*🎵 GRUPO DE LOUVOR — RELATÓRIO MENSAL*`, `*ICM Pinhos • ${nomeMes}*`, `*Chamadas:* ${datas.length}`, ''];
+      integrantes.forEach(([id, nome]) => {
+        const itens = datas.map(data => ({ data, item: window.glRegistros[data]?.[id] }));
+        const total = status => itens.filter(({ item }) => item?.status === status).length;
+        linhas.push(`*${nome}* — ${total('presente')} presente(s), ${total('atrasado')} atraso(s), ${total('ausente')} falta(s)`);
+        itens.forEach(({ data, item }) => linhas.push(`• ${glFormatarData(data)}: ${glStatusRelatorio(item)}`));
+        linhas.push('');
+      });
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(linhas.join('\n'))}`, '_blank');
+    }
+
+    function glEnviarRelatorioMensalPDF() {
+      if (!window.isAdmin) return;
+      const { mes, datas } = glDadosRelatorioMensal();
+      if (!datas.length) return alert('Nenhuma chamada salva neste mês.');
+      glRenderRelatorioMensal();
+      gerarECompartilharPDF('gl-folha-mensal', `Grupo_de_Louvor_${mes}`);
     }
 
     function glAbrirDataHistorico(data) {
